@@ -3,6 +3,7 @@
 
 import { Router } from "express";
 import userRoutes from "./routes/user.routes";
+import authRoutes from "./routes/auth.routes";
 
 const router = Router();
 
@@ -10,5 +11,6 @@ const router = Router();
 
 // will be localhost:3000/user/{whatever you chose in routes directory}
 router.use("/user", userRoutes); // will be localhost:3000/user/example
+router.use("/auth", authRoutes);
 
 export default router;

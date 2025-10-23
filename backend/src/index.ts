@@ -20,13 +20,14 @@ app.use(express.json())
 app.use('/',routes);
 
 
+
+// REVERT BACK WHEN MONGO IS SET UP
 (async () => {
-    try {
-        await connectDB(); 
-        app.listen(PORT, () => {
-            console.log(`Server is running at http://localhost:${PORT}`);
-        });
-    } catch (err) {
-        console.error('Failed to start server due to DB error:', err);
-    }
+    connectDB().catch(err => {
+        console.warn("Warning: couldnt connect to mongodb, endpoints will error", err);
+    });
+
+    app.listen(PORT, () => {
+        console.log(`Server is running at http://localhost:${PORT}`);
+    })
 })();
