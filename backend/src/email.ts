@@ -3,7 +3,6 @@ const emailConfig = require('../email.json');
 
 console.log('EMAIL.TS IS LOADING!');
 console.log('About to set API key...');
-sgMail.setApiKey('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');
 console.log('API key set successfully!');
 
 export async function sendVerificationEmail(userEmail: string) {
