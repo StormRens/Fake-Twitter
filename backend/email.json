@@ -1,0 +1,5 @@
+{
+  "FROM_EMAIL": "your-email@example.com",
+  "VERIFICATION_SUBJECT": "Verify Your Account",
+  "VERIFICATION_MESSAGE": "<h2>Welcome!</h2><p>Click to verify:</p><a href='http://cop4331-stormrens.com'>Verify & Login</a>"
+}
