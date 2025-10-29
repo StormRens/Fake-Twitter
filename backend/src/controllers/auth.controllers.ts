@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import crypto from "crypto";
-import sgMail from "@sendgrid/mail";
+//import sgMail from "@sendgrid/mail";
 import * as jwt from "jsonwebtoken";
 import { User } from "../models/user.model";
 
-sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
+//sgMail.setApiKey(process.env.SENDGRID_API_KEY || "");
 const FROM_EMAIL = process.env.FROM_EMAIL || "no-reply@example.com";
 const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${3000}`;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
