@@ -23,9 +23,8 @@ export async function register(req: Request, res: Response) {
 
     // UNCOMMENT ONCE MONGO IS SET UP
 
-    // const existingUser = await User.findOne({
-    //   $or: [{ email }, { username }],
-    // });
+    // const existingUser = await User.findOne({ username });
+
 
     // if (existingUser) {
     //   return res.status(400).json({ error: "User already exists" });
@@ -103,15 +102,15 @@ export async function verify(req: Request, res: Response) {
 // Login — only allow if verified
 export async function login(req: Request, res: Response) {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ error: "Missing credentials" });
+    const { username, password } = req.body;
+    if (!username || !password) return res.status(400).json({ error: "Missing credentials" });
 
-    console.log("USER INFO ON LOGIN:", email, password);
+    console.log("USER INFO ON LOGIN:", username, password);
     return res.status(200).json({sucess: "Success"});
 
     // UNCOMMENT ONCE MONGO IS SET UP
 
-    // const user = await User.findOne({ email });
+    // const user = await User.findOne({ username });
     // if (!user) return res.status(401).json({ error: "Invalid credentials" });
     // if (!user.isVerified) return res.status(403).json({ error: "Email not verified" });
 
