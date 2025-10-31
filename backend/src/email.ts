@@ -3,7 +3,7 @@ const emailConfig = require('../email.json');
 
 console.log('EMAIL.TS IS LOADING!');
 console.log('About to set API key...');
-// insert API keys here: sgMail.setApiKey('INSERT HERE TO TEST');
+// insert API keys here: sgMail setApiKey('');
 
 console.log('API key set successfully!');
 
