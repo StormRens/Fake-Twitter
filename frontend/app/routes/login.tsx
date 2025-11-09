@@ -1,8 +1,40 @@
 import React, { useState } from "react";
+import axios from "axios";
 import "./login.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    const form = new FormData(e.currentTarget);
+    const username = String(form.get("username") || "").trim();
+    const password = String(form.get("password") || "");
+
+    try {
+      // update this to point to actual backend route
+      await axios.post(
+        "http://localhost:3000/auth/login",
+        { username, password },
+        { withCredentials: true } // cookies
+      );
+
+      // on success, navigate to home
+      navigate("/");
+    } catch (err: any) {
+      console.error("Login error:", err);
+      setError(err?.response?.data?.error || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="login-page">
@@ -20,7 +52,7 @@ export default function Login() {
           <p className="subtitle">Sign in to continue</p>
         </header>
 
-        <form method="post" className="login-form">
+        <form onSubmit={handleSubmit} className="login-form">
           <label htmlFor="username">Username</label>
           <div className="input-wrap">
             <input
@@ -53,18 +85,19 @@ export default function Login() {
             </button>
           </div>
 
+          {error && <div className="error">{error}</div>}
+
           <div className="row">
-            <label className="checkbox">
-              <input type="checkbox" name="remember" /> <span>Remember me</span>
-            </label>
             <a className="link" href="/forgot">Forgot password?</a>
           </div>
 
-          <button type="submit" className="primary-btn">Sign in</button>
+          <button type="submit" className="primary-btn" disabled={loading}>
+            {loading ? "Signing in..." : "Sign in"}
+          </button>
         </form>
 
         <footer className="login-footer">
-          <span className="muted">Do not have an account?</span>{" "}
+          <span className="muted">Don't have an account?</span>{" "}
           <a className="link" href="/signup">Create one</a>
         </footer>
       </main>
