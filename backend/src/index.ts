@@ -4,12 +4,12 @@ import routes from "./server.routes";
 import { connectDB } from "./db";
 import cookieParser from "cookie-parser";
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 const app = express();
 
 app.use(cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"],
     credentials: true,

@@ -24,7 +24,7 @@ export default function Login() {
     try {
       // TODO: update URL to your real backend when ready
       await axios.post(
-        "http://localhost:3000/auth/login",
+        "http://localhost:5000/auth/login",
         { username, password },
         { withCredentials: true } // allow cookies (session/JWT)
       );

@@ -13,8 +13,8 @@ sgMail.setApiKey(SENDGRID_API_KEY);
 
 
 const FROM_EMAIL = "mo212125@ucf.edu";
-const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${3000}`;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const BACKEND_URL = process.env.BACKEND_URL || `http://localhost:${5000}`;
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 const JWT_SECRET = process.env.JWT_SECRET || "change_this";
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 const COOKIE_MAX_AGE = 1000 * 60 * 60 * 24 * 7; // 7 days
@@ -106,7 +106,7 @@ export async function verify(req: Request, res: Response) {
     });
 
     // redirect to frontend home (cookie will be sent by browser)
-    const url = (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, '');
+    const url = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, '');
     return res.redirect(url);
   } catch (err) {
     console.error(err);
