@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
 
 export default function Register() {
   const [showPw, setShowPw] = useState(false);
@@ -19,12 +20,10 @@ export default function Register() {
       aria-labelledby="registerTitle"
     >
       <header className="mb-6 text-center">
-        <div
-          className="
-            mx-auto mb-4 h-12 w-12 rounded-2xl
-            bg-[conic-gradient(from_210deg,#6b9cff,#9a6bff,#3dd3b0,#6b9cff)]
-            shadow-[0_8px_24px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.1)_inset]
-          "
+        <img
+          src={DUCK_ICON}
+          alt="App logo"
+          className="mx-auto mb-4 h-20 w-20 rounded-2xl"
         />
         <h1 id="registerTitle" className="text-2xl font-semibold">
           Create your account
