@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
-import "./login.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 export default function Login() {
   const navigate = useNavigate();
+
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,14 +19,14 @@ export default function Login() {
     const password = String(form.get("password") || "");
 
     try {
-      // update this to point to actual backend route
+      // TODO: update URL to your real backend when ready
       await axios.post(
         "http://localhost:3000/auth/login",
         { username, password },
-        { withCredentials: true } // cookies
+        { withCredentials: true } // allow cookies (session/JWT)
       );
 
-      // on success, navigate to home
+      // on success, go to home
       navigate("/");
     } catch (err: any) {
       console.error("Login error:", err);
@@ -37,70 +37,156 @@ export default function Login() {
   }
 
   return (
-    <div className="login-page">
-      {/* soft animated background */}
-      <div className="bg-orbs">
-        <span />
-        <span />
-        <span />
-      </div>
+    <main
+      className="
+        w-full rounded-3xl
+        border border-brand-stroke
+        [background:linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]
+        shadow-[0_20px_50px_rgba(0,0,0,0.55)]
+        backdrop-blur-2xl
+        px-6 py-8
+        sm:px-8
+      "
+      role="main"
+      aria-labelledby="loginTitle"
+    >
+      <header className="mb-6 text-center">
+        <div
+          className="
+            mx-auto mb-4 h-12 w-12 rounded-2xl
+            bg-[conic-gradient(from_210deg,#6b9cff,#9a6bff,#3dd3b0,#6b9cff)]
+            shadow-[0_8px_24px_rgba(0,0,0,0.35),0_0_0_1px_rgba(255,255,255,0.1)_inset]
+          "
+        />
+        <h1 id="loginTitle" className="text-2xl font-semibold">
+          Welcome back
+        </h1>
+        <p className="mt-1 text-sm text-brand-muted">Sign in to continue</p>
+      </header>
 
-      <main className="login-card" role="main" aria-labelledby="loginTitle">
-        <header className="login-header">
-          <div className="logo-dot" aria-hidden="true" />
-          <h1 id="loginTitle">Welcome back</h1>
-          <p className="subtitle">Sign in to continue</p>
-        </header>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Username */}
+        <div>
+          <label
+            htmlFor="username"
+            className="mb-1 block text-sm font-medium text-brand-text"
+          >
+            Username
+          </label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            placeholder="yourname"
+            autoComplete="username"
+            required
+            className="
+              w-full rounded-2xl
+              appearance-none
+              px-4 py-3 text-sm
+              text-brand-text
+              bg-[rgba(8,12,26,0.6)]
+              border border-[rgba(142,176,255,0.18)]
+              placeholder:text-[#c7cfda88]
+              outline-none
+              transition-[border,box-shadow,background] duration-150 ease-in-out
+              focus:border-[#7aa7ff]
+              focus:shadow-[0_0_0_4px_rgba(122,167,255,0.15)]
+              focus:bg-[rgba(8,12,26,0.75)]
+            "
+          />
+        </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
-          <label htmlFor="username">Username</label>
-          <div className="input-wrap">
-            <input
-              id="username"
-              name="username"
-              type="text"
-              placeholder="yourname"
-              required
-              autoComplete="username"
-            />
-          </div>
-
-          <label htmlFor="password">Password</label>
-          <div className="input-wrap">
+        {/* Password */}
+        <div>
+          <label
+            htmlFor="password"
+            className="mb-1 block text-sm font-medium text-brand-text"
+          >
+            Password
+          </label>
+          <div
+            className="
+              flex items-center rounded-2xl
+              border border-[rgba(142,176,255,0.18)]
+              bg-[rgba(8,12,26,0.6)] px-1
+              transition-[border,box-shadow,background] duration-150 ease-in-out
+              focus-within:border-[#7aa7ff]
+              focus-within:shadow-[0_0_0_4px_rgba(122,167,255,0.15)]
+              focus-within:bg-[rgba(8,12,26,0.75)]
+            "
+          >
             <input
               id="password"
               name="password"
               type={showPw ? "text" : "password"}
               placeholder="••••••••"
-              required
               autoComplete="current-password"
+              required
+              className="
+                w-full border-none bg-transparent
+                px-3 py-3 text-sm
+                text-brand-text
+                placeholder:text-[#c7cfda88]
+                focus:outline-none
+              "
             />
             <button
               type="button"
-              className="ghost-btn"
               onClick={() => setShowPw((v) => !v)}
+              className="px-3 text-xs font-medium text-[#9fb3d9] hover:text-brand-text"
               aria-label={showPw ? "Hide password" : "Show password"}
             >
               {showPw ? "Hide" : "Show"}
             </button>
           </div>
+        </div>
 
-          {error && <div className="error">{error}</div>}
+        {/* Error message (from backend) */}
+        {error && (
+          <p className="text-xs text-red-400">
+            {error}
+          </p>
+        )}
 
-          <div className="row">
-            <a className="link" href="/forgot">Forgot password?</a>
-          </div>
+        {/* Forgot password link */}
+        <div className="flex justify-end">
+          <a
+            href="/forgot"
+            className="text-xs font-medium text-brand-accent hover:text-brand-accent2"
+          >
+            Forgot password?
+          </a>
+        </div>
 
-          <button type="submit" className="primary-btn" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
+        {/* Submit button */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="
+            mt-2 w-full rounded-2xl
+            bg-gradient-to-r from-brand-accent to-brand-accent2
+            px-4 py-3 text-sm font-semibold text-white
+            shadow-[0_10px_24px_rgba(0,0,0,0.45)]
+            hover:brightness-105 hover:shadow-[0_14px_28px_rgba(0,0,0,0.55)]
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent2
+            focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-brand-bg)]
+            disabled:opacity-60 disabled:cursor-not-allowed
+          "
+        >
+          {loading ? "Signing in..." : "Sign in"}
+        </button>
+      </form>
 
-        <footer className="login-footer">
-          <span className="muted">Don't have an account?</span>{" "}
-          <a className="link" href="/signup">Create one</a>
-        </footer>
-      </main>
-    </div>
+      <footer className="mt-6 text-center text-sm text-brand-muted">
+        <span>Do not have an account?</span>{" "}
+        <a
+          href="/register"
+          className="font-medium text-brand-accent hover:text-brand-accent2"
+        >
+          Create one
+        </a>
+      </footer>
+    </main>
   );
 }
