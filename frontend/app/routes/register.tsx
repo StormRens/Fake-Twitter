@@ -1,9 +1,62 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router";
 const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
 
 export default function Register() {
+  const navigate = useNavigate();
+
   const [showPw, setShowPw] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+
+    const form = new FormData(e.currentTarget);
+    const name = String(form.get("name") || "").trim();
+    const username = String(form.get("username") || "").trim();
+    const email = String(form.get("email") || "").trim();
+    const password = String(form.get("password") || "");
+    const confirmPassword = String(form.get("confirmPassword") || "");
+
+    if (!username || !email || !password) {
+      setError("Please fill required fields.");
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await axios.post(
+        // update this for our backend
+        `http://localhost:5000/auth/register`,
+        { email, username, password, name },
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+
+      setSuccess("Account created. Check your email to verify your account.");
+      setTimeout(() => navigate("/login"), 1800);
+    } catch (err: any) {
+      console.error("Register error:", err);
+      setError(err?.response?.data?.error || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <main
@@ -31,7 +84,7 @@ export default function Register() {
         <p className="mt-1 text-sm text-brand-muted">It’s quick and easy</p>
       </header>
 
-      <form method="post" className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Full name */}
         <div>
           <label
@@ -46,21 +99,7 @@ export default function Register() {
             type="text"
             placeholder="Jane Doe"
             autoComplete="name"
-            required
-            className="
-              w-full rounded-2xl
-              appearance-none
-              px-4 py-3 text-sm
-              text-brand-text
-              bg-[rgba(8,12,26,0.6)]
-              border border-[rgba(142,176,255,0.18)]
-              placeholder:text-[#c7cfda88]
-              outline-none
-              transition-[border,box-shadow,background] duration-150 ease-in-out
-              focus:border-[#7aa7ff]
-              focus:shadow-[0_0_0_4px_rgba(122,167,255,0.15)]
-              focus:bg-[rgba(8,12,26,0.75)]
-            "
+            className="w-full rounded-2xl appearance-none px-4 py-3 text-sm text-brand-text bg-[rgba(8,12,26,0.6)] border border-[rgba(142,176,255,0.18)] placeholder:text-[#c7cfda88] outline-none transition-[border,box-shadow,background] duration-150 ease-in-out focus:border-[#7aa7ff] focus:shadow-[0_0_0_4px_rgba(122,167,255,0.15)] focus:bg-[rgba(8,12,26,0.75)]"
           />
         </div>
 
@@ -79,20 +118,7 @@ export default function Register() {
             placeholder="yourname"
             autoComplete="username"
             required
-            className="
-              w-full rounded-2xl
-              appearance-none
-              px-4 py-3 text-sm
-              text-brand-text
-              bg-[rgba(8,12,26,0.6)]
-              border border-[rgba(142,176,255,0.18)]
-              placeholder:text-[#c7cfda88]
-              outline-none
-              transition-[border,box-shadow,background] duration-150 ease-in-out
-              focus:border-[#7aa7ff]
-              focus:shadow-[0_0_0_4px_rgba(122,167,255,0.15)]
-              focus:bg-[rgba(8,12,26,0.75)]
-            "
+            className="w-full rounded-2xl appearance-none px-4 py-3 text-sm text-brand-text bg-[rgba(8,12,26,0.6)] border border-[rgba(142,176,255,0.18)] placeholder:text-[#c7cfda88] outline-none transition-[border,box-shadow,background] duration-150 ease-in-out focus:border-[#7aa7ff] focus:shadow-[0_0_0_4px_rgba(122,167,255,0.15)] focus:bg-[rgba(8,12,26,0.75)]"
           />
         </div>
 
@@ -111,20 +137,7 @@ export default function Register() {
             placeholder="you@example.com"
             autoComplete="email"
             required
-            className="
-              w-full rounded-2xl
-              appearance-none
-              px-4 py-3 text-sm
-              text-brand-text
-              bg-[rgba(8,12,26,0.6)]
-              border border-[rgba(142,176,255,0.18)]
-              placeholder:text-[#c7cfda88]
-              outline-none
-              transition-[border,box-shadow,background] duration-150 ease-in-out
-              focus:border-[#7aa7ff]
-              focus:shadow-[0_0_0_4px_rgba(122,167,255,0.15)]
-              focus:bg-[rgba(8,12,26,0.75)]
-            "
+            className="w-full rounded-2xl appearance-none px-4 py-3 text-sm text-brand-text bg-[rgba(8,12,26,0.6)] border border-[rgba(142,176,255,0.18)] placeholder:text-[#c7cfda88] outline-none transition-[border,box-shadow,background] duration-150 ease-in-out focus:border-[#7aa7ff] focus:shadow-[0_0_0_4px_rgba(122,167,255,0.15)] focus:bg-[rgba(8,12,26,0.75)]"
           />
         </div>
 
@@ -136,17 +149,7 @@ export default function Register() {
           >
             Password
           </label>
-          <div
-            className="
-              flex items-center rounded-2xl
-              border border-[rgba(142,176,255,0.18)]
-              bg-[rgba(8,12,26,0.6)] px-1
-              transition-[border,box-shadow,background] duration-150 ease-in-out
-              focus-within:border-[#7aa7ff]
-              focus-within:shadow-[0_0_0_4px_rgba(122,167,255,0.15)]
-              focus-within:bg-[rgba(8,12,26,0.75)]
-            "
-          >
+          <div className="flex items-center rounded-2xl border border-[rgba(142,176,255,0.18)] bg-[rgba(8,12,26,0.6)] px-1 transition-[border,box-shadow,background] duration-150 ease-in-out focus-within:border-[#7aa7ff] focus-within:shadow-[0_0_0_4px_rgba(122,167,255,0.15)] focus-within:bg-[rgba(8,12,26,0.75)]">
             <input
               id="password"
               name="password"
@@ -155,13 +158,7 @@ export default function Register() {
               autoComplete="new-password"
               minLength={8}
               required
-              className="
-                w-full border-none bg-transparent
-                px-3 py-3 text-sm
-                text-brand-text
-                placeholder:text-[#c7cfda88]
-                focus:outline-none
-              "
+              className="w-full border-none bg-transparent px-3 py-3 text-sm text-brand-text placeholder:text-[#c7cfda88] focus:outline-none"
             />
             <button
               type="button"
@@ -182,17 +179,7 @@ export default function Register() {
           >
             Confirm password
           </label>
-          <div
-            className="
-              flex items-center rounded-2xl
-              border border-[rgba(142,176,255,0.18)]
-              bg-[rgba(8,12,26,0.6)] px-1
-              transition-[border,box-shadow,background] duration-150 ease-in-out
-              focus-within:border-[#7aa7ff]
-              focus-within:shadow-[0_0_0_4px_rgba(122,167,255,0.15)]
-              focus-within:bg-[rgba(8,12,26,0.75)]
-            "
-          >
+          <div className="flex items-center rounded-2xl border border-[rgba(142,176,255,0.18)] bg-[rgba(8,12,26,0.6)] px-1 transition-[border,box-shadow,background] duration-150 ease-in-out focus-within:border-[#7aa7ff] focus-within:shadow-[0_0_0_4px_rgba(122,167,255,0.15)] focus-within:bg-[rgba(8,12,26,0.75)]">
             <input
               id="confirmPassword"
               name="confirmPassword"
@@ -201,13 +188,7 @@ export default function Register() {
               autoComplete="new-password"
               minLength={8}
               required
-              className="
-                w-full border-none bg-transparent
-                px-3 py-3 text-sm
-                text-brand-text
-                placeholder:text-[#c7cfda88]
-                focus:outline-none
-              "
+              className="w-full border-none bg-transparent px-3 py-3 text-sm text-brand-text placeholder:text-[#c7cfda88] focus:outline-none"
             />
             <button
               type="button"
@@ -220,26 +201,25 @@ export default function Register() {
           </div>
         </div>
 
+        {error && <div className="text-sm text-red-400">{error}</div>}
+        {success && <div className="text-sm text-green-400">{success}</div>}
+
         {/* Submit */}
         <button
           type="submit"
-          className="
-            mt-2 w-full rounded-2xl
-            bg-gradient-to-r from-brand-accent to-brand-accent2
-            px-4 py-3 text-sm font-semibold text-white
-            shadow-[0_10px_24px_rgba(0,0,0,0.45)]
-            hover:brightness-105 hover:shadow-[0_14px_28px_rgba(0,0,0,0.55)]
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent2
-            focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-brand-bg)]
-          "
+          disabled={loading}
+          className="mt-2 w-full rounded-2xl bg-gradient-to-r from-brand-accent to-brand-accent2 px-4 py-3 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(0,0,0,0.45)] hover:brightness-105 hover:shadow-[0_14px_28px_rgba(0,0,0,0.55)] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent2 focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-brand-bg)]"
         >
-          Create account
+          {loading ? "Creating..." : "Create account"}
         </button>
       </form>
 
       <footer className="mt-6 text-center text-sm text-brand-muted">
         <span>Already have an account?</span>{" "}
-        <a href="/login" className="font-medium text-brand-accent hover:text-brand-accent2">
+        <a
+          href="/login"
+          className="font-medium text-brand-accent hover:text-brand-accent2"
+        >
           Sign in
         </a>
       </footer>
