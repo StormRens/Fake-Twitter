@@ -17,7 +17,7 @@ export default [
     // "/" => dashboard
     route("/dashboard","./routes/dashboard.tsx"),
     route("/profile","./routes/profile.tsx"),
-    //route("/following", "./routes/following.tsx"),
+    route("/following", "./routes/following.tsx")
     //route("/settings", "./routes/settings.tsx")
   ]),
     
