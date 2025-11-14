@@ -11,5 +11,10 @@ export default [
         route("/login", "./routes/login.tsx"),
         route("/register", "./routes/register.tsx")
     ]),
+
+    // Main app pages share AppLayout
+  layout("./layout/AppLayout.tsx", [
+    // "/" => dashboard
+    route("/dashboard","./routes/dashboard.tsx")]),
     
 ] satisfies RouteConfig;
