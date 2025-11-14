@@ -15,6 +15,7 @@ export default [
     // Main app pages share AppLayout
   layout("./layout/AppLayout.tsx", [
     // "/" => dashboard
-    route("/dashboard","./routes/dashboard.tsx")]),
+    route("/dashboard","./routes/dashboard.tsx"),
+    route("/profile","./routes/profile.tsx")]),
     
 ] satisfies RouteConfig;
