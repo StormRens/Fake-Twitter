@@ -16,6 +16,9 @@ export default [
   layout("./layout/AppLayout.tsx", [
     // "/" => dashboard
     route("/dashboard","./routes/dashboard.tsx"),
-    route("/profile","./routes/profile.tsx")]),
+    route("/profile","./routes/profile.tsx"),
+    //route("/following", "./routes/following.tsx"),
+    //route("/settings", "./routes/settings.tsx")
+  ]),
     
 ] satisfies RouteConfig;
