@@ -298,34 +298,39 @@ class _LoginScreenState extends State<LoginScreen>
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Checkbox(
-                                  value: _rememberMe,
-                                  onChanged: (value) => setState(
-                                    () => _rememberMe = value ?? false,
+                            Flexible(
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Checkbox(
+                                    value: _rememberMe,
+                                    onChanged: (value) => setState(
+                                      () => _rememberMe = value ?? false,
+                                    ),
+                                    activeColor: const Color(0xFF6B9CFF),
                                   ),
-                                  activeColor: const Color(0xFF6B9CFF),
-                                ),
-                                const Text(
-                                  'Remember me',
-                                  style: TextStyle(
-                                    color: Color(0xFFA8B0BD),
-                                    fontSize: 14,
+                                  const Text(
+                                    'Remember me',
+                                    style: TextStyle(
+                                      color: Color(0xFFA8B0BD),
+                                      fontSize: 13,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                            TextButton(
-                              onPressed: () {
-                                // TODO: Forgot password
-                              },
-                              child: const Text(
-                                'Forgot password?',
-                                style: TextStyle(
-                                  color: Color(0xFF6B9CFF),
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                            Flexible(
+                              child: TextButton(
+                                onPressed: () {
+                                  // TODO: Forgot password
+                                },
+                                child: const Text(
+                                  'Forgot password?',
+                                  style: TextStyle(
+                                    color: Color(0xFF6B9CFF),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             ),

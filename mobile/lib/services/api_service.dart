@@ -2,12 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // TODO: Update this to your actual backend URL
-  // For local testing on emulator, use 10.0.2.2 instead of localhost
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  // iOS Simulator uses localhost, Android emulator uses 10.0.2.2
+  // Backend runs on port 5000
+  static const String baseUrl = 'http://localhost:5000';
 
   static Future<Map<String, dynamic>> login(String username, String password) async {
-    final url = Uri.parse('$baseUrl/auth/login');
+    final url = Uri.parse('$baseUrl/auth/login/mobile');
 
     final response = await http.post(
       url,
@@ -31,7 +31,7 @@ class ApiService {
     String username,
     String password,
   ) async {
-    final url = Uri.parse('$baseUrl/auth/register');
+    final url = Uri.parse('$baseUrl/auth/register/mobile');
 
     final response = await http.post(
       url,
