@@ -2,14 +2,12 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-// NOTE: Adjust this when you deploy.
-// For local dev, backend is on http://localhost:5000
-const API_BASE_URL = "http://localhost:5000";
+// we can make this use env later if wanted
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-// ASSUMPTION: In Express you did something like:
-//   app.use("/posts", postRoutes);
-// so createPost is at POST /posts/create
-const API_POSTS_BASE = `${API_BASE_URL}/posts`;
+//post, not posts 
+const API_POSTS_BASE = `${API_BASE_URL}/post`;
 
 type CreatePostProps = {
   // Parent (PostFeed) passes a function to reload posts after a successful post
@@ -33,10 +31,6 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
     setError(null);
 
     try {
-      // NOTE:
-      // - Backend expects userId from auth cookie (handled by requireAuth).
-      // - We send the full text as "title" and leave description empty.
-      //   Change this if you ever split title vs description.
       await axios.post(
         `${API_POSTS_BASE}/create`,
         {
@@ -44,19 +38,20 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
           description: "",
         },
         {
-          withCredentials: true, // important for cookies / JWT
+          withCredentials: true, // send auth cookie so requireAuth passes
         }
       );
 
       setDraft("");
 
-      // Ask parent to reload posts from backend
       if (onPostCreated) {
         await onPostCreated();
       }
     } catch (err: any) {
       console.error("Error creating post:", err);
-      setError(err?.response?.data?.error || "Failed to create post");
+      const msg =
+        err?.response?.data?.error || err?.message || "Failed to create post";
+      setError(msg);
     } finally {
       setLoadingCreate(false);
     }

@@ -5,17 +5,13 @@ import PostCard from "./PostCard";
 import CreatePost from "./CreatePost";
 import type { Post } from "../types/post";
 
-// NOTE: Adjust this base URL when deploying.
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
-// ASSUMPTION: Express mounts like:
-//   app.use("/posts", postRoutes);
-//   app.use("/users", userRoutes);
-// If your mounts differ, change these:
-const API_POSTS_BASE = `${API_BASE_URL}/posts`;
-const API_USERS_BASE = `${API_BASE_URL}/users`;
+//post / user, not posts / users
+const API_POSTS_BASE = `${API_BASE_URL}/post`;
+const API_USERS_BASE = `${API_BASE_URL}/user`;
 
-// Raw backend shapes
 type RawPost = {
   _id: string;
   userId: string;
@@ -43,7 +39,6 @@ export default function PostFeed() {
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Fetch posts + users and merge
   async function loadAllPosts() {
     setLoadingPosts(true);
     setLoadError(null);
@@ -51,7 +46,7 @@ export default function PostFeed() {
     try {
       const [postsRes, usersRes] = await Promise.all([
         axios.get<PostsResponse>(`${API_POSTS_BASE}/`, {
-          withCredentials: true, // requireAuth on posts
+          withCredentials: true, // required by requireAuth on /post/
         }),
         axios.get<UsersResponse>(`${API_USERS_BASE}/all`),
       ]);
@@ -77,7 +72,9 @@ export default function PostFeed() {
       setVisibleCount(Math.min(15, enriched.length));
     } catch (err: any) {
       console.error("Error loading posts:", err);
-      setLoadError(err?.response?.data?.error || "Failed to load posts");
+      const msg =
+        err?.response?.data?.error || err?.message || "Failed to load posts";
+      setLoadError(msg);
     } finally {
       setLoadingPosts(false);
     }
@@ -102,10 +99,10 @@ export default function PostFeed() {
         lg:col-span-2
       "
     >
-      {/* Composer (create post) */}
+      {/* Composer */}
       <CreatePost onPostCreated={loadAllPosts} />
 
-      {/* Loading / errors for the feed */}
+      {/* Errors / loading */}
       {loadError && (
         <p className="text-xs text-red-400">{loadError}</p>
       )}
@@ -127,7 +124,7 @@ export default function PostFeed() {
         )}
       </div>
 
-      {/* Load more button / end-of-feed message */}
+      {/* Load more / end-of-feed */}
       {posts.length > 0 && (
         <div className="mt-3 flex justify-center">
           {hasMore ? (
