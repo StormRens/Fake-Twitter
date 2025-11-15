@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import 'register_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,11 +51,14 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
 
       if (response['token'] != null) {
-        // TODO: Navigate to home screen and save token
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login successful!'),
-            backgroundColor: Colors.green,
+        // Navigate to home screen with username and token
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              username: _usernameController.text.trim(),
+              token: response['token'],
+            ),
           ),
         );
       }
