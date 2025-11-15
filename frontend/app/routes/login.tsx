@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
+
 const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
-
-
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,29 +12,41 @@ export default function Login() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
     setLoading(true);
 
     const form = new FormData(e.currentTarget);
     const username = String(form.get("username") || "").trim();
     const password = String(form.get("password") || "");
 
+    if (!username || !password) {
+      setError("Please enter both username and password.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // TODO: update URL to your real backend when ready
       await axios.post(
-        "http://localhost:5000/auth/login",
+        `${API_BASE_URL}/auth/login`,
         { username, password },
-        { withCredentials: true } // allow cookies (session/JWT)
+        { withCredentials: true } // send/receive auth cookie
       );
 
-      // on success, go to home
-      navigate("/");
+      // after successful axios.post(...)
+      setSuccess("Login successful. Redirecting to dashboard...");
+      setTimeout(() => navigate("/dashboard", { state: { username } }), 800 );
+    
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err?.response?.data?.error || "Login failed");
+      const msg =
+        err?.response?.data?.error ||
+        "Login failed. Please check your credentials.";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -64,7 +77,19 @@ export default function Login() {
         </h1>
         <p className="mt-1 text-sm text-brand-muted">Sign in to continue</p>
       </header>
-      
+
+      {/* Global messages */}
+      {error && (
+        <p className="mb-3 text-xs text-red-400" role="alert">
+          {error}
+        </p>
+      )}
+      {success && (
+        <p className="mb-3 text-xs text-green-400" role="status">
+          {success}
+        </p>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Username */}
         <div>
@@ -83,11 +108,9 @@ export default function Login() {
             required
             className="
               w-full rounded-2xl
-              appearance-none
-              px-4 py-3 text-sm
-              text-brand-text
-              bg-[rgba(8,12,26,0.6)]
               border border-[rgba(142,176,255,0.18)]
+              bg-[rgba(8,12,26,0.6)]
+              px-3 py-3 text-sm text-brand-text
               placeholder:text-[#c7cfda88]
               outline-none
               transition-[border,box-shadow,background] duration-150 ease-in-out
@@ -143,35 +166,29 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Error message (from backend) */}
-        {error && (
-          <p className="text-xs text-red-400">
-            {error}
-          </p>
-        )}
 
-        {/* Forgot password link */}
+        {/* 
+        Forgot password link (not including now)
         <div className="flex justify-end">
-          <a
-            href="/forgot"
-            className="text-xs font-medium text-brand-accent hover:text-brand-accent2"
-          >
-            Forgot password?
-          </a>
+          <span className="text-xs text-brand-muted">
+            Forgot password? (still needs implementation)
+          </span>
         </div>
+        */}
 
-        {/* Submit button */}
+        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
           className="
             mt-2 w-full rounded-2xl
-            bg-gradient-to-r from-brand-accent to-brand-accent2
-            px-4 py-3 text-sm font-semibold text-white
-            shadow-[0_10px_24px_rgba(0,0,0,0.45)]
-            hover:brightness-105 hover:shadow-[0_14px_28px_rgba(0,0,0,0.55)]
-            focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent2
-            focus-visible:ring-offset-2 focus-visible:ring-offset-[color:var(--color-brand-bg)]
+            bg-gradient-to-r from-[#4f8cff] to-[#8b5dff]
+            px-4 py-3
+            text-sm font-semibold
+            text-white
+            shadow-[0_10px_25px_rgba(0,0,0,0.35)]
+            transition-transform duration-150
+            hover:translate-y-0.5
             disabled:opacity-60 disabled:cursor-not-allowed
           "
         >
@@ -181,12 +198,12 @@ export default function Login() {
 
       <footer className="mt-6 text-center text-sm text-brand-muted">
         <span>Do not have an account?</span>{" "}
-        <a
-          href="/register"
+        <Link
+          to="/register"
           className="font-medium text-brand-accent hover:text-brand-accent2"
         >
           Create one
-        </a>
+        </Link>
       </footer>
     </main>
   );
