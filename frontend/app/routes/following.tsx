@@ -1,43 +1,135 @@
-// src/routes/following.tsx
-import React from "react";
-import { useNavigate } from "react-router";
+// app/routes/following.tsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { Link, useLocation, useNavigate } from "react-router";
+import PostCard from "../components/PostCard";
+import type { Post } from "../types/post";
 
 const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
 
-type FollowingUser = {
-  id: number;
-  name: string;
-  handle: string;
-  bio: string;
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+const API_POSTS_BASE = `${API_BASE_URL}/post`;
+const API_USERS_BASE = `${API_BASE_URL}/user`;
+
+type RawPost = {
+  _id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  date: string;
 };
 
-const FOLLOWING: FollowingUser[] = [
-  {
-    id: 1,
-    name: "Frontend Duck",
-    handle: "@ux_duck",
-    bio: "Design nerd. Making buttons feel nice since 2020.",
-  },
-  {
-    id: 2,
-    name: "Backend Goose",
-    handle: "@api_goose",
-    bio: "I speak REST, JSON and sometimes gRPC.",
-  },
-  {
-    id: 3,
-    name: "Security Swan",
-    handle: "@sec_swan",
-    bio: "If you store passwords in plain text, we need to talk.",
-  },
-];
+type RawUser = {
+  _id: string;
+  username: string;
+};
+
+type PostsResponse = {
+  posts: RawPost[];
+};
+
+type UsersResponse = {
+  users: RawUser[];
+};
+
+type LocationState = {
+  username?: string;
+};
 
 export default function Following() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = (location.state as LocationState) || {};
 
-  function handleLogout() {
-    navigate("/login");
+  const usernameFromState = state.username;
+
+  const displayName = usernameFromState || "You";
+  const handle = usernameFromState ? `@${usernameFromState}` : "@you";
+
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleLogout() {
+    try {
+      await axios.post(
+        `${API_BASE_URL}/auth/logout`,
+        null,
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      navigate("/login");
+    }
   }
+
+  async function loadFollowingPosts() {
+    if (!usernameFromState) {
+      setError("Missing user info. Try going back to the dashboard and coming here again.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      // 1) Get all users so we can:
+      //    - find the current user's _id
+      //    - map post.userId -> username for display
+      const usersRes = await axios.get<UsersResponse>(`${API_USERS_BASE}/all`);
+      const allUsers = usersRes.data.users || [];
+
+      const me = allUsers.find((u) => u.username === usernameFromState);
+      if (!me) {
+        setError("Could not find the current user in /user/all.");
+        setLoading(false);
+        return;
+      }
+
+      const viewerId = me._id;
+
+      // 2) Get posts from people I follow
+      const postsRes = await axios.get<PostsResponse>(
+        `${API_POSTS_BASE}/${viewerId}/following`,
+        { withCredentials: true }
+      );
+
+      const rawPosts = postsRes.data.posts || [];
+
+      // 3) Map each post's userId -> username
+      const userMap = new Map<string, string>();
+      for (const u of allUsers) {
+        userMap.set(u._id, u.username);
+      }
+
+      const enriched: Post[] = rawPosts.map((p) => ({
+        _id: p._id,
+        userId: p.userId,
+        title: p.title,
+        description: p.description,
+        date: p.date,
+        authorUsername: userMap.get(p.userId),
+      }));
+
+      setPosts(enriched);
+    } catch (err: any) {
+      console.error("Error loading following posts:", err);
+      const msg =
+        err?.response?.data?.error || err?.message || "Failed to load posts";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    void loadFollowingPosts();
+  }, [usernameFromState]);
+
+  const hasPosts = posts.length > 0;
 
   return (
     <>
@@ -72,8 +164,8 @@ export default function Following() {
           {/* USER PILL */}
           <div className="flex items-center gap-3">
             <div className="hidden text-right text-xs sm:block">
-              <div className="font-semibold">You</div>
-              <div className="text-brand-muted">@you</div>
+              <div className="font-semibold">{displayName}</div>
+              <div className="text-brand-muted">{handle}</div>
             </div>
             <button
               onClick={handleLogout}
@@ -92,59 +184,65 @@ export default function Following() {
           lg:grid-cols-[260px_minmax(0,1fr)_minmax(0,1fr)]
         "
       >
-        {/* LEFT COLUMN – nav + info + suggestions + footer */}
+        {/* LEFT COLUMN – nav + info + footer */}
         <aside className="hidden space-y-4 lg:block">
           {/* Navigation */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
             <h2 className="mb-3 text-sm font-semibold">Navigation</h2>
             <nav className="space-y-2 text-sm text-brand-muted">
-              <button className="block w-full text-left hover:text-brand-text">
+              <Link
+                to="/dashboard"
+                state={{ username: usernameFromState }}
+                className="block w-full text-left hover:text-brand-text"
+              >
                 Home
-              </button>
-              <button className="block w-full text-left hover:text-brand-text">
+              </Link>
+              <Link
+                to="/dashboard"
+                state={{ username: usernameFromState }}
+                className="block w-full text-left hover:text-brand-text"
+              >
                 Explore
-              </button>
-              <button className="block w-full text-left font-semibold text-brand-text">
+              </Link>
+              <span className="block w-full text-left font-semibold text-brand-text">
                 Following
-              </button>
-              <button className="block w-full text-left hover:text-brand-text">
+              </span>
+              <Link
+                to="/profile"
+                state={{ username: usernameFromState }}
+                className="block w-full text-left hover:text-brand-text"
+              >
                 Profile
-              </button>
-              <button className="block w-full text-left text-xs text-brand-muted/80 hover:text-brand-text">
+              </Link>
+              <Link
+                to="/settings"
+                state={{ username: usernameFromState }}
+                className="block w-full text-left text-xs text-brand-muted/80 hover:text-brand-text"
+              >
                 Settings
-              </button>
+              </Link>
             </nav>
           </div>
 
-          {/* Following summary */}
+          {/* Small summary card */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 text-sm text-brand-muted shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
             <h2 className="mb-2 text-sm font-semibold text-brand-text">
-              Following
+              Following feed
             </h2>
             <p className="text-xs">
-              You’re currently following {FOLLOWING.length} accounts. Their
-              posts will appear in your Home feed.
+              This page shows posts only from accounts you follow.
             </p>
-          </div>
-
-          {/* Suggestions / info card */}
-          <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 text-xs text-brand-muted shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
-            <p className="mb-1">
-              Tip: later you could add a search box here or a “Discover” tab
-              that calls a real recommendations API.
-            </p>
-            <p>For now, this page just uses static example data.</p>
           </div>
 
           {/* Footer */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 text-xs text-brand-muted shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
             FakeTwitwer · {new Date().getFullYear()}
             <br />
-            Built with React, TypeScript & Tailwind.
+            Built with React, TypeScript &amp; Tailwind.
           </div>
         </aside>
 
-        {/* CENTER + RIGHT – list of people you follow */}
+        {/* CENTER + RIGHT – posts from people you follow */}
         <section
           className="
             space-y-4 rounded-3xl border border-brand-stroke bg-brand-card-soft
@@ -154,40 +252,29 @@ export default function Following() {
         >
           <div className="mb-2 flex items-center justify-between">
             <h1 className="text-lg font-semibold text-brand-text">
-              People you follow
+              Posts from people you follow
             </h1>
-            <p className="text-xs text-brand-muted">
-              {FOLLOWING.length} accounts
-            </p>
           </div>
 
-          <div className="space-y-3">
-            {FOLLOWING.map((user) => (
-              <article
-                key={user.id}
-                className="flex items-start justify-between rounded-2xl bg-brand-card/80 p-3"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-brand-accent to-brand-accent2 text-xs font-semibold">
-                    {user.name.charAt(0)}
-                  </div>
-                  <div>
-                    <div className="text-sm font-semibold text-brand-text">
-                      {user.name}
-                    </div>
-                    <div className="text-xs text-brand-muted">
-                      {user.handle}
-                    </div>
-                    <p className="mt-1 text-xs text-brand-text/90">
-                      {user.bio}
-                    </p>
-                  </div>
-                </div>
-                <button className="mt-1 rounded-2xl border border-brand-stroke px-3 py-1 text-xs font-medium text-brand-text hover:bg-brand-card">
-                  Following
-                </button>
-              </article>
+          {error && (
+            <p className="text-xs text-red-400">{error}</p>
+          )}
+
+          {loading && posts.length === 0 && !error && (
+            <p className="text-xs text-brand-muted">Loading posts...</p>
+          )}
+
+          <div className="divide-y divide-brand-stroke/60">
+            {posts.map((post) => (
+              <PostCard key={post._id} post={post} />
             ))}
+
+            {!loading && !error && !hasPosts && (
+              <p className="py-4 text-sm text-brand-muted">
+                No posts yet from people you follow. Once they start posting,
+                their posts will show up here.
+              </p>
+            )}
           </div>
         </section>
       </main>

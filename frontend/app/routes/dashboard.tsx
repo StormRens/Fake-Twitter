@@ -105,6 +105,7 @@ export default function Dashboard() {
             <nav className="space-y-2 text-sm text-brand-muted">
               <Link
                 to="/dashboard"
+                state={{ username: state.username }}
                 className="block w-full text-left font-medium text-brand-text"
               >
                 Home
@@ -113,6 +114,7 @@ export default function Dashboard() {
               {/* These can be wired later when pages exist */}
               <Link
                 to="/dashboard"
+                state={{ username: state.username }}
                 className="block w-full text-left hover:text-brand-text"
               >
                 Explore
@@ -120,6 +122,7 @@ export default function Dashboard() {
 
               <Link
                 to="/following"
+                state={{ username: state.username }}
                 className="block w-full text-left hover:text-brand-text"
               >
                 Following
@@ -127,6 +130,7 @@ export default function Dashboard() {
 
               <Link
                 to="/profile"
+                state={{ username: state.username }}
                 className="block w-full text-left hover:text-brand-text"
               >
                 Profile
@@ -134,6 +138,7 @@ export default function Dashboard() {
 
               <Link
                 to="/settings"
+                state={{ username: state.username }}
                 className="block w-full text-left text-xs text-brand-muted/80 hover:text-brand-text"
               >
                 Settings
