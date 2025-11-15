@@ -4,6 +4,8 @@ import axios from "axios";
 import { Link, useLocation, useNavigate } from "react-router";
 import PostCard from "../components/PostCard";
 import type { Post } from "../types/post";
+import UserSearchBar from "../components/UserSearchBar";
+
 
 const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
 
@@ -153,13 +155,7 @@ export default function Following() {
           </div>
 
           {/* SEARCH BAR */}
-          <div className="hidden flex-1 max-w-md items-center rounded-2xl border border-brand-stroke bg-brand-card-soft px-3 py-2 text-sm text-brand-muted sm:flex">
-            <input
-              type="search"
-              placeholder="Search FakeTwitwer"
-              className="w-full bg-transparent text-xs text-brand-text placeholder:text-brand-muted focus:outline-none"
-            />
-          </div>
+          <UserSearchBar currentUsername={state.username} />
 
           {/* USER PILL */}
           <div className="flex items-center gap-3">

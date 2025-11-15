@@ -1,8 +1,9 @@
 // app/routes/dashboard.tsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link, useLocation, useNavigate } from "react-router";
 import PostFeed from "../components/PostFeed";
+import UserSearchBar from "../components/UserSearchBar";
 
 const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
 const API_BASE_URL =
@@ -10,6 +11,12 @@ const API_BASE_URL =
 
 type LocationState = {
   username?: string;
+};
+
+type UserSummary = {
+  _id: string;
+  username: string;
+  email?: string;
 };
 
 export default function Dashboard() {
@@ -22,7 +29,6 @@ export default function Dashboard() {
   const handle = state.username ? `@${state.username}` : "@you";
 
   const [loggingOut, setLoggingOut] = useState(false);
-
   async function handleLogout() {
     setLoggingOut(true);
     try {
@@ -43,7 +49,7 @@ export default function Dashboard() {
   return (
     <>
       {/* TOP NAVBAR */}
-      <header className="border-b border-brand-stroke/60 bg-brand-card/60 backdrop-blur-xl">
+      <header className="border-b border-brand-stroke/60 bg-brand-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <img
@@ -62,14 +68,7 @@ export default function Dashboard() {
           </div>
 
           {/* SEARCH BAR */}
-          <div className="hidden flex-1 max-w-md items-center rounded-2xl border border-brand-stroke bg-brand-card-soft px-3 py-2 text-sm text-brand-muted sm:flex">
-            <input
-              type="search"
-              placeholder="Search FakeTwitwer"
-              className="w-full bg-transparent text-xs text-brand-text placeholder:text-brand-muted focus:outline-none"
-            />
-          </div>
-
+          <UserSearchBar currentUsername={state.username} />
           {/* USER PILL */}
           <div className="flex items-center gap-3">
             <div className="hidden text-right text-xs sm:block">
