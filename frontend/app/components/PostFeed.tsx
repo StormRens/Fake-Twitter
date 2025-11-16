@@ -36,11 +36,13 @@ type UsersResponse = {
 type PostFeedProps = {
   loggedInUsername?: string;
   onFollowChange?: (username: string, nowFollowing: boolean) => void;
+  externalFollowStatus?: Record<string, boolean>;
 };
 
 export default function PostFeed({
   loggedInUsername,
   onFollowChange,
+  externalFollowStatus,
 }: PostFeedProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [visibleCount, setVisibleCount] = useState(15);
@@ -111,7 +113,7 @@ export default function PostFeed({
     setFollowStatusByUser((prev) => ({
       ...prev,
       [username]: nowFollowing,
-      
+
     }));
 
     onFollowChange?.(username, nowFollowing);
@@ -141,10 +143,18 @@ export default function PostFeed({
       <div className="divide-y divide-brand-stroke/60">
         {visiblePosts.map((post) => {
           const authorUsername = post.authorUsername ?? "";
-          const knownFollowStatus =
-            authorUsername in followStatusByUser
-              ? followStatusByUser[authorUsername]
-              : undefined;
+          let knownFollowStatus: boolean | undefined = undefined;
+          if (
+            externalFollowStatus &&
+            authorUsername in externalFollowStatus
+          ) {
+            knownFollowStatus = externalFollowStatus[authorUsername];
+          } else if (authorUsername in followStatusByUser) {
+            // 2) Otherwise use PostFeed's internal map
+            knownFollowStatus = followStatusByUser[authorUsername];
+          } else {
+            knownFollowStatus = undefined;
+          }
 
           return (
             <PostCard

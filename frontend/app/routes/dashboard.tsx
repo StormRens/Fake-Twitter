@@ -48,6 +48,10 @@ export default function Dashboard() {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
 
+  const [sidebarFollowStatus, setSidebarFollowStatus] = useState<
+    Record<string, boolean>
+  >({});
+
   async function loadWhoToFollow() {
     if (!state.username) return;
 
@@ -116,22 +120,26 @@ export default function Dashboard() {
     targetUsername: string,
     nowFollowing: boolean
   ) {
+    // Update the sidebar list
     setSuggestedUsers((prev) => {
       if (nowFollowing) {
-        // Just followed this user → remove from suggestions
         return prev.filter((u) => u.username !== targetUsername);
-      } else {
-        // For unfollow, don't touch the local list here.
-        // We'll re-fetch from the backend so the sidebar stays correct.
-        return prev;
       }
+      return prev;
     });
 
+    // NEW: update global follow map so PostFeed sees sidebar clicks
+    setSidebarFollowStatus((prev) => ({
+      ...prev,
+      [targetUsername]: nowFollowing,
+    }));
+
+    // If unfollow → reload suggestions
     if (!nowFollowing) {
-      // Just UNfollowed someone → refresh "Who to follow" from /user/all
       void loadWhoToFollow();
     }
   }
+
 
 
   async function handleLogout() {
@@ -330,6 +338,7 @@ export default function Dashboard() {
         <PostFeed
           loggedInUsername={state.username}
           onFollowChange={handleGlobalFollowChange}
+          externalFollowStatus={sidebarFollowStatus}   // ← NEW LINE
         />
       </main>
     </>
