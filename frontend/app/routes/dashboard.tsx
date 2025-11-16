@@ -4,6 +4,7 @@ import axios from "axios";
 import { Link, useLocation, useNavigate } from "react-router";
 import PostFeed from "../components/PostFeed";
 import UserSearchBar from "../components/UserSearchBar";
+import FollowButton from "../components/FollowButton";
 
 const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
 const API_BASE_URL =
@@ -29,6 +30,7 @@ export default function Dashboard() {
   const handle = state.username ? `@${state.username}` : "@you";
 
   const [loggingOut, setLoggingOut] = useState(false);
+
   async function handleLogout() {
     setLoggingOut(true);
     try {
@@ -69,6 +71,7 @@ export default function Dashboard() {
 
           {/* SEARCH BAR */}
           <UserSearchBar currentUsername={state.username} />
+
           {/* USER PILL */}
           <div className="flex items-center gap-3">
             <div className="hidden text-right text-xs sm:block">
@@ -171,9 +174,8 @@ export default function Dashboard() {
                   </div>
                   <div className="text-xs text-brand-muted">@ux_duck</div>
                 </div>
-                <button className="rounded-2xl bg-brand-card px-3 py-1 text-xs font-medium text-brand-text hover:bg-brand-card-soft">
-                  Follow
-                </button>
+                {/* functional follow button */}
+                <FollowButton targetUsername="ux_duck" />
               </li>
 
               <li className="flex items-center justify-between">
@@ -183,9 +185,8 @@ export default function Dashboard() {
                   </div>
                   <div className="text-xs text-brand-muted">@api_goose</div>
                 </div>
-                <button className="rounded-2xl bg-brand-card px-3 py-1 text-xs font-medium text-brand-text hover:bg-brand-card-soft">
-                  Follow
-                </button>
+                {/* functional follow button */}
+                <FollowButton targetUsername="api_goose" />
               </li>
             </ul>
           </div>
@@ -199,7 +200,7 @@ export default function Dashboard() {
         </aside>
 
         {/* CENTER (Post Composer + Feed) */}
-        <PostFeed />
+        <PostFeed loggedInUsername={state.username} />
       </main>
     </>
   );

@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import PostCard from "../components/PostCard";
 import type { Post } from "../types/post";
 import UserSearchBar from "../components/UserSearchBar";
+import FollowButton from "../components/FollowButton";
 
 
 const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;

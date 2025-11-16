@@ -33,11 +33,20 @@ type UsersResponse = {
   users: RawUser[];
 };
 
-export default function PostFeed() {
+type PostFeedProps = {
+  loggedInUsername?: string;
+};
+
+export default function PostFeed({ loggedInUsername }: PostFeedProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [visibleCount, setVisibleCount] = useState(15);
   const [loadingPosts, setLoadingPosts] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // 👇 NEW: shared follow status map, per username
+  const [followStatusByUser, setFollowStatusByUser] = useState<
+    Record<string, boolean>
+  >({});
 
   async function loadAllPosts() {
     setLoadingPosts(true);
@@ -91,6 +100,16 @@ export default function PostFeed() {
   const visiblePosts = posts.slice(0, visibleCount);
   const hasMore = visibleCount < posts.length;
 
+  // 👇 When any PostCard discovers a new follow status (via fetch or click),
+  // update the shared map so ALL posts for that username stay in sync.
+  function handleFollowStatusChange(username: string, nowFollowing: boolean) {
+    if (!username) return;
+    setFollowStatusByUser((prev) => ({
+      ...prev,
+      [username]: nowFollowing,
+    }));
+  }
+
   return (
     <section
       className="
@@ -113,9 +132,23 @@ export default function PostFeed() {
 
       {/* Posts list */}
       <div className="divide-y divide-brand-stroke/60">
-        {visiblePosts.map((post) => (
-          <PostCard key={post._id} post={post} />
-        ))}
+        {visiblePosts.map((post) => {
+          const authorUsername = post.authorUsername ?? "";
+          const knownFollowStatus =
+            authorUsername in followStatusByUser
+              ? followStatusByUser[authorUsername]
+              : undefined;
+
+          return (
+            <PostCard
+              key={post._id}
+              post={post}
+              loggedInUsername={loggedInUsername}
+              knownFollowStatus={knownFollowStatus}
+              onFollowStatusChange={handleFollowStatusChange}
+            />
+          );
+        })}
 
         {!loadingPosts && visiblePosts.length === 0 && !loadError && (
           <p className="py-4 text-sm text-brand-muted">

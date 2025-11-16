@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import PostCard from "../components/PostCard";
 import type { Post } from "../types/post";
 import UserSearchBar from "../components/UserSearchBar";
+import FollowButton from "../components/FollowButton";
 
 const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
 
@@ -30,7 +31,7 @@ type ProfileResponse = {
 };
 
 type LocationState = {
-  username?: string;        // logged-in user
+  username?: string;         // logged-in user
   profileUsername?: string;  // whose profile we are viewing
 };
 
@@ -40,7 +41,8 @@ export default function Profile() {
   const state = (location.state as LocationState) || {};
 
   const loggedInUsername = state.username;
-  const initialProfileUsername = state.profileUsername || loggedInUsername || null;
+  const initialProfileUsername =
+    state.profileUsername || loggedInUsername || null;
 
   const [profileUsername, setProfileUsername] = useState<string | null>(
     initialProfileUsername
@@ -50,20 +52,27 @@ export default function Profile() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false); // <-- needed for button
 
+  // If location.state changes (e.g., navigating to another profile),
+  // update which profile we are viewing.
   useEffect(() => {
-  const newState = (location.state as LocationState) || {};
-  const newProfile =
-    newState.profileUsername || newState.username || null;
+    const newState = (location.state as LocationState) || {};
+    const newProfile =
+      newState.profileUsername || newState.username || null;
 
-  setProfileUsername(newProfile);
-}, [location.state]);
+    setProfileUsername(newProfile);
+  }, [location.state]);
 
   const displayName = profileUsername || "You";
   const handle = profileUsername ? `@${profileUsername}` : "@you";
 
+  // pill info for the logged-in user on the top right
   const pillName = loggedInUsername || "You";
   const pillHandle = loggedInUsername ? `@${loggedInUsername}` : "@you";
+
+  const viewingOwnProfile =
+    loggedInUsername != null && profileUsername === loggedInUsername;
 
   async function handleLogout() {
     try {
@@ -81,48 +90,49 @@ export default function Profile() {
 
   async function loadProfile() {
     if (!profileUsername) {
-    setError(
-      "Missing profile info. Try going back to the dashboard and opening this profile again."
-    );
-    return;
+      setError(
+        "Missing profile info. Try going back to the dashboard and opening this profile again."
+      );
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await axios.get<ProfileResponse>(
+        `${API_USERS_BASE}/${profileUsername}/profile`,
+        { withCredentials: true }
+      );
+
+      const data = res.data;
+
+      setProfileUsername(data.username);
+      setFollowersCount(data.followersCount);
+      setFollowingCount(data.followingCount);
+      setIsFollowing(data.isFollowing); // <-- sync from backend
+
+      const mappedPosts: Post[] = (data.posts || []).map((p) => ({
+        _id: p._id,
+        userId: p.userId,
+        title: p.title,
+        description: p.description,
+        date: p.date,
+        authorUsername: data.username,
+      }));
+
+      setPosts(mappedPosts);
+    } catch (err: any) {
+      console.error("Error loading profile:", err);
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to load profile";
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   }
-
-  setLoading(true);
-  setError(null);
-
-  try {
-    const res = await axios.get<ProfileResponse>(
-      `${API_USERS_BASE}/${profileUsername}/profile`,
-      { withCredentials: true }
-    );
-
-    const data = res.data;
-
-    setProfileUsername(data.username);
-    setFollowersCount(data.followersCount);
-    setFollowingCount(data.followingCount);
-
-    const mappedPosts: Post[] = (data.posts || []).map((p) => ({
-      _id: p._id,
-      userId: p.userId,
-      title: p.title,
-      description: p.description,
-      date: p.date,
-      authorUsername: data.username,
-    }));
-
-    setPosts(mappedPosts);
-  } catch (err: any) {
-    console.error("Error loading profile:", err);
-    const msg =
-      err?.response?.data?.error ||
-      err?.message ||
-      "Failed to load profile";
-    setError(msg);
-  } finally {
-    setLoading(false);
-  }
-}
 
   useEffect(() => {
     void loadProfile();
@@ -301,6 +311,20 @@ export default function Profile() {
               </div>
             </div>
 
+            {/* Follow button: ONLY when viewing someone else's profile */}
+            {!viewingOwnProfile && profileUsername && (
+              <FollowButton
+                targetUsername={profileUsername}
+                initialFollowing={isFollowing}
+                onChanged={(nowFollowing) => {
+                  setIsFollowing(nowFollowing);
+                  setFollowersCount((prev) =>
+                    Math.max(0, prev + (nowFollowing ? 1 : -1))
+                  );
+                }}
+              />
+            )}
+
             <div className="flex gap-3 text-xs text-brand-muted">
               <div>
                 <span className="font-semibold text-brand-text">
@@ -335,7 +359,13 @@ export default function Profile() {
           {/* Posts list */}
           <div className="divide-y divide-brand-stroke/60">
             {posts.map((post) => (
-              <PostCard key={post._id} post={post} />
+              <PostCard
+                key={post._id}
+                post={post}
+                loggedInUsername={loggedInUsername}
+                // don't show follow button for posts on the profile page
+                showFollowButton={false}
+              />
             ))}
 
             {!loading && !error && posts.length === 0 && (
