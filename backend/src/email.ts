@@ -5,7 +5,7 @@ const emailConfig = require('../email.json');
 console.log('EMAIL.TS IS LOADING!');
 console.log('About to set API key...');
 // insert API keys here: 
-sgMail setApiKey(process.env.SENDGRID_API_KEY as string);
+sgMail.setApiKey(process.env.SENDGRID_API_KEY as string);
 console.log('API key set successfully!');
 
 export async function sendVerificationEmail(userEmail: string) {
