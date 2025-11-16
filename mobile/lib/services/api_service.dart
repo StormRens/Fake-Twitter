@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // iOS Simulator uses localhost, Android emulator uses 10.0.2.2
+  // For physical iPhone: Use your Mac's local IP address
+  // For iOS Simulator: Use localhost
+  // For Android emulator: Use 10.0.2.2
   // Backend runs on port 5000
-  static const String baseUrl = 'http://localhost:5000';
+  static const String baseUrl = 'http://192.168.1.230:5000';
 
   static Future<Map<String, dynamic>> login(String username, String password) async {
     final url = Uri.parse('$baseUrl/auth/login/mobile');
