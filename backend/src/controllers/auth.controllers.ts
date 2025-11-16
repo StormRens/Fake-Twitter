@@ -100,7 +100,8 @@ export async function verify(req: Request, res: Response) {
     // set httpOnly cookie for web
     res.cookie('token', signed, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      //This is where we would pass for the secure cookie later.
+      secure: false,
       sameSite: 'lax',
       maxAge: COOKIE_MAX_AGE,
     });
@@ -138,11 +139,10 @@ export async function login(req: Request, res: Response) {
     // set cookie 
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: false,        
       sameSite: 'lax',
       maxAge: COOKIE_MAX_AGE,
     });
-
     return res.json({ message: "Logged in" });
   } catch (err) {
     console.error(err);

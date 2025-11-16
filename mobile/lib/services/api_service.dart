@@ -5,8 +5,8 @@ class ApiService {
   // For physical iPhone: Use your Mac's local IP address
   // For iOS Simulator: Use localhost
   // For Android emulator: Use 10.0.2.2
-  // Backend runs on port 5000
-  static const String baseUrl = 'http://192.168.1.230:5000';
+  // Backend runs on port 5001 (changed from 5000 due to macOS AirPlay conflict)
+  static const String baseUrl = 'http://192.168.1.230:5001';
 
   static Future<Map<String, dynamic>> login(String username, String password) async {
     final url = Uri.parse('$baseUrl/auth/login/mobile');

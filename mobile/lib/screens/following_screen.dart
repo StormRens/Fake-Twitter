@@ -1,28 +1,25 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class FollowingScreen extends StatefulWidget {
   final String username;
   final String token;
 
-  const HomeScreen({
+  const FollowingScreen({
     super.key,
     required this.username,
     required this.token,
   });
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<FollowingScreen> createState() => _FollowingScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _FollowingScreenState extends State<FollowingScreen> {
   bool _loggingOut = false;
 
   Future<void> _handleLogout() async {
     setState(() => _loggingOut = true);
-
-    // In a real app, you'd call the logout API here
-    // For now, just navigate back to login
 
     if (mounted) {
       Navigator.of(context).pushAndRemoveUntil(
@@ -53,18 +50,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Profile Summary Card
-                    _buildProfileSummaryCard(),
+                    // Following Feed Info Card
+                    _buildFollowingInfoCard(),
 
                     const SizedBox(height: 16),
 
-                    // Who to Follow Card
-                    _buildWhoToFollowCard(),
-
-                    const SizedBox(height: 16),
-
-                    // Post Feed Placeholder
-                    _buildPostFeedPlaceholder(),
+                    // Following Posts Feed
+                    _buildFollowingPostsCard(),
                   ],
                 ),
               ),
@@ -222,11 +214,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          _buildNavLink('Home', isActive: true),
+          _buildNavLink('Home'),
           const SizedBox(height: 8),
           _buildNavLink('Explore'),
           const SizedBox(height: 8),
-          _buildNavLink('Following'),
+          _buildNavLink('Following', isActive: true),
           const SizedBox(height: 8),
           _buildNavLink('Profile'),
         ],
@@ -249,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildProfileSummaryCard() {
+  Widget _buildFollowingInfoCard() {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -274,36 +266,20 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       padding: const EdgeInsets.all(20),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Your profile',
+          Text(
+            'Following feed',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
               color: Color(0xFFE7ECF3),
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
-            widget.username,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFFE7ECF3),
-            ),
-          ),
-          Text(
-            '@${widget.username}',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFFA8B0BD),
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'This is your public timeline. Once the backend is hooked up, your real posts will appear here.',
+            'This page shows posts only from accounts you follow.',
             style: TextStyle(
               fontSize: 12,
               color: Color(0xFFA8B0BD),
@@ -314,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildWhoToFollowCard() {
+  Widget _buildFollowingPostsCard() {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -343,115 +319,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Who to follow',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFE7ECF3),
-            ),
-          ),
-          const SizedBox(height: 12),
-          _buildUserSuggestion('user1'),
-          const SizedBox(height: 12),
-          _buildUserSuggestion('user2'),
-          const SizedBox(height: 12),
-          _buildUserSuggestion('user3'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUserSuggestion(String username) {
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                username,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFFE7ECF3),
-                ),
-              ),
-              Text(
-                '@$username',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFFA8B0BD),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Follow button
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: const LinearGradient(
-              colors: [
-                Color(0xFF4f8cff),
-                Color(0xFF8b5dff),
-              ],
-            ),
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                // TODO: Implement follow functionality
-              },
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Text(
-                  'Follow',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPostFeedPlaceholder() {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white.withOpacity(0.08),
-            Colors.white.withOpacity(0.04),
-          ],
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.6),
-            blurRadius: 35,
-            offset: const Offset(0, 18),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Post Feed',
+            'Posts from people you follow',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -460,12 +328,12 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Placeholder post 1
+          // Sample post 1
           _buildPostPlaceholder(
             username: 'user1',
-            title: 'First post!',
-            description: 'This is my first post on FakeTwitwer',
-            date: '2 hours ago',
+            title: 'Amazing day!',
+            description: 'Just had a great experience working on this project',
+            date: '1 hour ago',
           ),
 
           const Divider(
@@ -473,12 +341,12 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 32,
           ),
 
-          // Placeholder post 2
+          // Sample post 2
           _buildPostPlaceholder(
             username: 'user2',
-            title: 'Hello world',
-            description: 'Just testing out this new platform',
-            date: '5 hours ago',
+            title: 'New feature released',
+            description: 'Check out our latest update!',
+            date: '3 hours ago',
           ),
 
           const Divider(
@@ -486,20 +354,20 @@ class _HomeScreenState extends State<HomeScreen> {
             height: 32,
           ),
 
-          // Placeholder post 3
+          // Sample post 3
           _buildPostPlaceholder(
             username: 'user3',
-            title: 'Great day!',
-            description: 'Having an amazing time building this project',
-            date: '1 day ago',
+            title: 'Weekend plans',
+            description: 'Looking forward to the weekend',
+            date: '5 hours ago',
           ),
 
           const SizedBox(height: 16),
 
-          // No more posts message
           const Center(
             child: Text(
-              'You\'re all caught up.',
+              'No posts yet from people you follow. Once they start posting, their posts will show up here.',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 12,
                 color: Color(0xFFA8B0BD),
