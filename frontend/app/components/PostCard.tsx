@@ -1,6 +1,7 @@
 // app/components/PostCard.tsx
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router"; // NEW
 import type { Post } from "../types/post";
 import FollowButton from "./FollowButton";
 
@@ -37,7 +38,7 @@ type PostCardProps = {
   knownFollowStatus?: boolean;
   onFollowStatusChange?: (username: string, nowFollowing: boolean) => void;
 
-  // 👇 NEW: allow hiding the follow button for some contexts (like profile page)
+  // allow hiding the follow button for some contexts (like profile page)
   showFollowButton?: boolean;
 };
 
@@ -46,8 +47,10 @@ export default function PostCard({
   loggedInUsername,
   knownFollowStatus,
   onFollowStatusChange,
-  showFollowButton = true, // default: show it
+  showFollowButton = true,
 }: PostCardProps) {
+  const navigate = useNavigate(); // 👈 NEW
+
   const username = post.authorUsername ?? "Unknown duck";
   const handle = `@${username}`;
   const timeAgo = post.date ? formatTimeAgo(post.date) : "";
@@ -103,34 +106,56 @@ export default function PostCard({
     };
   }, [username, isOwnPost, knownFollowStatus, onFollowStatusChange]);
 
+  // 👇 NEW: open this author's profile when clicking avatar/name
+  function openProfile() {
+    if (!username || username === "Unknown duck") return;
+
+    navigate("/profile", {
+      state: {
+        // who is logged in
+        username: loggedInUsername,
+        // whose profile we want to view
+        profileUsername: username,
+      },
+    });
+  }
+
   return (
     <article className="flex gap-3 px-3 py-4 text-sm hover:bg-brand-card-soft/70">
-      {/* Avatar */}
-      <div
+      {/* Avatar (clickable) */}
+      <button
+        type="button"
+        onClick={openProfile}
         className="
           flex h-9 w-9 items-center justify-center rounded-full
           bg-gradient-to-br from-brand-accent to-brand-accent2
           text-xs font-semibold text-white shadow-[0_4px_12px_rgba(0,0,0,0.45)]
+          cursor-pointer focus:outline-none focus:ring-2 focus:ring-brand-accent
         "
       >
         {initial}
-      </div>
+      </button>
 
       {/* Main content */}
       <div className="min-w-0 flex-1">
         {/* Header row */}
         <header className="flex items-start gap-2">
-          <div className="min-w-0">
-            <span className="block truncate text-sm font-semibold text-brand-text">
+          {/* Name + handle (also clickable) */}
+          <button
+            type="button"
+            onClick={openProfile}
+            className="min-w-0 text-left cursor-pointer"
+          >
+            <span className="block truncate text-sm font-semibold text-brand-text hover:underline">
               {username}
             </span>
-            <span className="block truncate text-xs text-brand-muted">
+            <span className="block truncate text-xs text-brand-muted hover:underline">
               {handle}
             </span>
-          </div>
+          </button>
 
           <div className="ml-auto flex items-center gap-2">
-            {/* 👇 only show follow button when:
+            {/* only show follow button when:
                  - this is not your own post
                  - AND the parent allowed it via showFollowButton */}
             {showFollowButton && !isOwnPost && (

@@ -60,10 +60,9 @@ export default function Dashboard() {
 
     try {
       // 1) Get all users
-      const res = await axios.get<UsersResponse>(
-        `${API_USERS_BASE}/all`,
-        { withCredentials: true }
-      );
+      const res = await axios.get<UsersResponse>(`${API_USERS_BASE}/all`, {
+        withCredentials: true,
+      });
 
       // NOTE: we treat the items as "any" so we can look for following[]
       const allUsers: any[] = res.data.users || [];
@@ -128,7 +127,7 @@ export default function Dashboard() {
       return prev;
     });
 
-    // NEW: update global follow map so PostFeed sees sidebar clicks
+    // update global follow map so PostFeed sees sidebar clicks
     setSidebarFollowStatus((prev) => ({
       ...prev,
       [targetUsername]: nowFollowing,
@@ -140,16 +139,12 @@ export default function Dashboard() {
     }
   }
 
-
-
   async function handleLogout() {
     setLoggingOut(true);
     try {
-      await axios.post(
-        `${API_BASE_URL}/auth/logout`,
-        null,
-        { withCredentials: true }
-      );
+      await axios.post(`${API_BASE_URL}/auth/logout`, null, {
+        withCredentials: true,
+      });
     } catch (err) {
       console.error("Logout error:", err);
       // Even if logout fails, we still send user back to login.
@@ -157,6 +152,18 @@ export default function Dashboard() {
       setLoggingOut(false);
       navigate("/login");
     }
+  }
+
+  // 👇 NEW: helper to open a user's profile from "Who to follow"
+  function openProfile(targetUsername: string) {
+    if (!targetUsername) return;
+
+    navigate("/profile", {
+      state: {
+        username: state.username,          // logged-in user
+        profileUsername: targetUsername,   // whose profile to view
+      },
+    });
   }
 
   useEffect(() => {
@@ -298,14 +305,19 @@ export default function Dashboard() {
                   key={user._id}
                   className="flex items-center justify-between"
                 >
-                  <div>
-                    <div className="font-medium text-brand-text">
+                  {/* 👇 Make username/handle clickable to open profile */}
+                  <button
+                    type="button"
+                    onClick={() => openProfile(user.username)}
+                    className="text-left"
+                  >
+                    <div className="font-medium text-brand-text hover:underline">
                       {user.username}
                     </div>
-                    <div className="text-xs text-brand-muted">
+                    <div className="text-xs text-brand-muted hover:underline">
                       @{user.username}
                     </div>
-                  </div>
+                  </button>
 
                   <FollowButton
                     targetUsername={user.username}
@@ -338,7 +350,7 @@ export default function Dashboard() {
         <PostFeed
           loggedInUsername={state.username}
           onFollowChange={handleGlobalFollowChange}
-          externalFollowStatus={sidebarFollowStatus}   // ← NEW LINE
+          externalFollowStatus={sidebarFollowStatus}
         />
       </main>
     </>
