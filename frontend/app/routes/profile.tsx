@@ -35,6 +35,15 @@ type LocationState = {
   profileUsername?: string;  // whose profile we are viewing
 };
 
+type UserSummary = {
+  _id: string;
+  username: string;
+};
+
+type UsersResponse = {
+  users: any[]; // we treat them as any because following[] can be mixed
+};
+
 export default function Profile() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,6 +62,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState(false); // <-- needed for button
+
+  const [followListKind, setFollowListKind] = useState<null | "followers" | "following">(null);
+  const [followListUsers, setFollowListUsers] = useState<UserSummary[]>([]);
+  const [followListLoading, setFollowListLoading] = useState(false);
+  const [followListError, setFollowListError] = useState<string | null>(null);
 
   // If location.state changes (e.g., navigating to another profile),
   // update which profile we are viewing.
@@ -137,6 +151,131 @@ export default function Profile() {
   useEffect(() => {
     void loadProfile();
   }, [profileUsername]);
+
+  async function openFollowList(kind: "followers" | "following") {
+    if (!profileUsername) return;
+
+    setFollowListKind(kind);
+    setFollowListLoading(true);
+    setFollowListError(null);
+
+    try {
+      // 1) load all users (same endpoint you use in dashboard.tsx)
+      const res = await axios.get<UsersResponse>(`${API_USERS_BASE}/all`, {
+        withCredentials: true,
+      });
+
+      const allUsers = res.data.users || [];
+
+      // 2) find the user whose profile we are viewing
+      const profileUser = allUsers.find(
+        (u: any) => u.username === profileUsername
+      );
+
+      if (!profileUser) {
+        setFollowListError("Could not find this user.");
+        setFollowListLoading(false);
+        return;
+      }
+
+      const profileId = String(profileUser._id);
+
+      // maps for quick lookup
+      const userById = new Map<string, any>();
+      const userByUsername = new Map<string, any>();
+
+      for (const u of allUsers) {
+        userById.set(String(u._id), u);
+        userByUsername.set(String(u.username), u);
+      }
+
+      let resultUsers: any[] = [];
+
+      if (kind === "following") {
+        // --- who THIS user is following ---
+        const rawFollowing = Array.isArray(profileUser.following)
+          ? profileUser.following
+          : [];
+
+        resultUsers = rawFollowing
+          .map((f: any) => {
+            if (!f) return null;
+
+            // could be id string
+            if (typeof f === "string") {
+              return userById.get(f) || userByUsername.get(f) || null;
+            }
+
+            // or an embedded user object
+            if (typeof f === "object") {
+              if (f._id && userById.get(String(f._id))) {
+                return userById.get(String(f._id));
+              }
+              if (f.username && userByUsername.get(String(f.username))) {
+                return userByUsername.get(String(f.username));
+              }
+              return f;
+            }
+
+            return null;
+          })
+          .filter(Boolean);
+      } else {
+        // --- followers: anyone whose "following" includes this user ---
+        const followers: any[] = [];
+
+        for (const u of allUsers) {
+          const arr = Array.isArray(u.following) ? u.following : [];
+
+          const followsProfile = arr.some((f: any) => {
+            if (!f) return false;
+
+            if (typeof f === "string") {
+              return f === profileId || f === profileUsername;
+            }
+
+            if (typeof f === "object") {
+              return (
+                String(f._id) === profileId ||
+                String(f.username) === profileUsername
+              );
+            }
+
+            return false;
+          });
+
+          if (followsProfile) {
+            followers.push(u);
+          }
+        }
+
+        resultUsers = followers;
+      }
+
+      // 3) store a clean list with just _id + username for the UI
+      const cleaned: UserSummary[] = resultUsers.map((u: any) => ({
+        _id: String(u._id),
+        username: String(u.username),
+      }));
+
+      setFollowListUsers(cleaned);
+    } catch (err: any) {
+      console.error("Error loading follow list:", err);
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to load follow list";
+      setFollowListError(msg);
+    } finally {
+      setFollowListLoading(false);
+    }
+  }
+
+  function closeFollowList() {
+    setFollowListKind(null);
+    setFollowListUsers([]);
+    setFollowListError(null);
+  }
 
   return (
     <>
@@ -325,26 +464,37 @@ export default function Profile() {
               />
             )}
 
-            <div className="flex gap-3 text-xs text-brand-muted">
-              <div>
-                <span className="font-semibold text-brand-text">
-                  {posts.length}
-                </span>{" "}
-                posts
-              </div>
-              <div>
-                <span className="font-semibold text-brand-text">
-                  {followersCount}
-                </span>{" "}
-                followers
-              </div>
-              <div>
-                <span className="font-semibold text-brand-text">
-                  {followingCount}
-                </span>{" "}
-                following
-              </div>
+            <div className="flex items-center gap-4 text-xs text-brand-muted">
+
+              {/* posts – NOT clickable, but padded to match buttons */}
+              <span className="flex items-center gap-1 rounded-full px-2 py-1">
+                <span className="font-semibold text-brand-text">{posts.length}</span>
+                <span>posts</span>
+              </span>
+
+              {/* followers – clickable */}
+              <button
+                type="button"
+                onClick={() => openFollowList("followers")}
+                className="flex items-center gap-1 rounded-full px-2 py-1 hover:bg-brand-card-soft/80"
+              >
+                <span className="font-semibold text-brand-text">{followersCount}</span>
+                <span>followers</span>
+              </button>
+
+              {/* following – clickable */}
+              <button
+                type="button"
+                onClick={() => openFollowList("following")}
+                className="flex items-center gap-1 rounded-full px-2 py-1 hover:bg-brand-card-soft/80"
+              >
+                <span className="font-semibold text-brand-text">{followingCount}</span>
+                <span>following</span>
+              </button>
+
             </div>
+
+
           </header>
 
           {/* Errors / loading */}
@@ -375,7 +525,87 @@ export default function Profile() {
               </p>
             )}
           </div>
+
         </section>
+        {followListKind && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
+            <div className="relative z-[10000] w-full max-w-sm rounded-3xl border border-brand-stroke bg-slate-950 p-4 text-sm shadow-[0_18px_35px_rgba(0,0,0,0.9)]">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-brand-text">
+                  {followListKind === "followers" ? "Followers" : "Following"} ·{" "}
+                  {displayName}
+                </h2>
+                <button
+                  type="button"
+                  className="text-xs text-brand-muted hover:text-brand-text"
+                  onClick={closeFollowList}
+                >
+                  Close
+                </button>
+              </div>
+
+              {followListLoading && (
+                <p className="text-xs text-brand-muted">Loading…</p>
+              )}
+
+              {followListError && (
+                <p className="text-xs text-red-400">{followListError}</p>
+              )}
+
+              {!followListLoading &&
+                !followListError &&
+                followListUsers.length === 0 && (
+                  <p className="text-xs text-brand-muted">
+                    No users in this list yet.
+                  </p>
+                )}
+
+              <ul className="mt-2 space-y-2">
+                {followListUsers.map((u) => (
+                  <li
+                    key={u._id}
+                    className="flex items-center justify-between"
+                  >
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 text-left"
+                      onClick={() => {
+                        closeFollowList();
+                        navigate("/profile", {
+                          state: {
+                            username: loggedInUsername,    // logged-in user
+                            profileUsername: u.username,   // profile to view
+                          },
+                        });
+                      }}
+                    >
+                      {/* Avatar */}
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-card text-xs font-semibold text-brand-text">
+                        {u.username.charAt(0).toUpperCase()}
+                      </div>
+
+                      <div>
+                        {/* Username with its own underline hover */}
+                        <div className="text-sm font-medium text-brand-text hover:underline cursor-pointer">
+                          {u.username}
+                        </div>
+
+                        {/* @handle with its own underline hover */}
+                        <div className="text-[10px] text-brand-muted hover:underline cursor-pointer">
+                          @{u.username}
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+
+
+
+            </div>
+          </div>
+        )}
+
       </main>
     </>
   );
