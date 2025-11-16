@@ -113,10 +113,56 @@ export default function PostFeed({
     setFollowStatusByUser((prev) => ({
       ...prev,
       [username]: nowFollowing,
-
     }));
 
     onFollowChange?.(username, nowFollowing);
+  }
+
+  // 👇 NEW: delete a post (called from PostCard)
+  async function handleDeletePost(postId: string) {
+    try {
+      await axios.delete(`${API_POSTS_BASE}/${postId}`, {
+        withCredentials: true,
+      });
+
+      setPosts((prev) => prev.filter((p) => p._id !== postId));
+      // also shrink visibleCount if needed so we don't leave an empty slot
+      setVisibleCount((prev) => Math.min(prev, posts.length - 1));
+    } catch (err: any) {
+      console.error("Error deleting post:", err);
+      const msg =
+        err?.response?.data?.error || err?.message || "Failed to delete post";
+      setLoadError(msg);
+    }
+  }
+
+  // 👇 NEW: edit a post (title only for now)
+  async function handleEditPost(postId: string, newTitle: string) {
+    try {
+      await axios.put(
+        `${API_POSTS_BASE}/${postId}`,
+        { title: newTitle },
+        { withCredentials: true }
+      );
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p._id === postId
+            ? {
+                ...p,
+                title: newTitle,
+              }
+            : p
+        )
+      );
+    } catch (err: any) {
+      console.error("Error editing post:", err);
+      const msg =
+        err?.response?.data?.error || err?.message || "Failed to edit post";
+      setLoadError(msg);
+      // let the caller still close its local editing UI; the error is shown above the feed
+      throw err;
+    }
   }
 
   return (
@@ -131,9 +177,7 @@ export default function PostFeed({
       <CreatePost onPostCreated={loadAllPosts} />
 
       {/* Errors / loading */}
-      {loadError && (
-        <p className="text-xs text-red-400">{loadError}</p>
-      )}
+      {loadError && <p className="text-xs text-red-400">{loadError}</p>}
 
       {loadingPosts && posts.length === 0 && !loadError && (
         <p className="text-xs text-brand-muted">Loading posts...</p>
@@ -163,6 +207,8 @@ export default function PostFeed({
               loggedInUsername={loggedInUsername}
               knownFollowStatus={knownFollowStatus}
               onFollowStatusChange={handleFollowStatusChange}
+              onDelete={handleDeletePost}          // 👈 NEW
+              onEdit={handleEditPost}             // 👈 NEW
             />
           );
         })}
@@ -191,9 +237,7 @@ export default function PostFeed({
               {loadingPosts ? "Loading..." : "Load more"}
             </button>
           ) : (
-            <p className="text-xs text-brand-muted">
-              You’re all caught up.
-            </p>
+            <p className="text-xs text-brand-muted">You’re all caught up.</p>
           )}
         </div>
       )}
