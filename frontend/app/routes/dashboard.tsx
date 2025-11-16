@@ -10,6 +10,16 @@ const DUCK_ICON = `${import.meta.env.BASE_URL}DuckIcon.svg`;
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
+const API_USERS_BASE = `${API_BASE_URL}/user`;
+
+type ProfileResponse = {
+  username: string;
+  followersCount: number;
+  followingCount: number;
+  posts: any[];
+  isFollowing: boolean;
+};
+
 type LocationState = {
   username?: string;
 };
@@ -18,6 +28,10 @@ type UserSummary = {
   _id: string;
   username: string;
   email?: string;
+};
+
+type UsersResponse = {
+  users: UserSummary[];
 };
 
 export default function Dashboard() {
@@ -30,6 +44,95 @@ export default function Dashboard() {
   const handle = state.username ? `@${state.username}` : "@you";
 
   const [loggingOut, setLoggingOut] = useState(false);
+  const [suggestedUsers, setSuggestedUsers] = useState<UserSummary[]>([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+
+  async function loadWhoToFollow() {
+    if (!state.username) return;
+
+    setSuggestionsLoading(true);
+    setSuggestionsError(null);
+
+    try {
+      // 1) Get all users
+      const res = await axios.get<UsersResponse>(
+        `${API_USERS_BASE}/all`,
+        { withCredentials: true }
+      );
+
+      // NOTE: we treat the items as "any" so we can look for following[]
+      const allUsers: any[] = res.data.users || [];
+
+      // 2) Find "me"
+      const me = allUsers.find((u) => u.username === state.username);
+
+      // 3) Build a set of IDs/usernames that I already follow
+      const followingSet = new Set<string>();
+
+      if (me && Array.isArray(me.following)) {
+        for (const f of me.following) {
+          if (!f) continue;
+
+          // could be an id string
+          if (typeof f === "string") {
+            followingSet.add(f);
+          } else if (typeof f === "object") {
+            // or an embedded user object
+            if (f._id) followingSet.add(f._id as string);
+            if (f.username) followingSet.add(f.username as string);
+          }
+        }
+      }
+
+      // 4) Candidates: everyone except me, and not already followed
+      const candidates = allUsers.filter((u) => {
+        if (u.username === state.username) return false;
+
+        // If we don't have any following info, show them (not following anyone)
+        if (followingSet.size === 0) return true;
+
+        const id = String(u._id);
+        const uname = String(u.username);
+
+        return !followingSet.has(id) && !followingSet.has(uname);
+      });
+
+      // 5) Limit how many we show
+      setSuggestedUsers(candidates.slice(0, 5));
+    } catch (err: any) {
+      console.error("Error loading who to follow:", err);
+      const msg =
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to load suggestions";
+      setSuggestionsError(msg);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  }
+
+  function handleGlobalFollowChange(
+    targetUsername: string,
+    nowFollowing: boolean
+  ) {
+    setSuggestedUsers((prev) => {
+      if (nowFollowing) {
+        // Just followed this user → remove from suggestions
+        return prev.filter((u) => u.username !== targetUsername);
+      } else {
+        // For unfollow, don't touch the local list here.
+        // We'll re-fetch from the backend so the sidebar stays correct.
+        return prev;
+      }
+    });
+
+    if (!nowFollowing) {
+      // Just UNfollowed someone → refresh "Who to follow" from /user/all
+      void loadWhoToFollow();
+    }
+  }
+
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -47,6 +150,10 @@ export default function Dashboard() {
       navigate("/login");
     }
   }
+
+  useEffect(() => {
+    void loadWhoToFollow();
+  }, [state.username]);
 
   return (
     <>
@@ -166,28 +273,48 @@ export default function Dashboard() {
             <h2 className="mb-3 text-sm font-semibold text-brand-text">
               Who to follow
             </h2>
-            <ul className="space-y-3">
-              <li className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-brand-text">
-                    Frontend Duck
-                  </div>
-                  <div className="text-xs text-brand-muted">@ux_duck</div>
-                </div>
-                {/* functional follow button */}
-                <FollowButton targetUsername="ux_duck" />
-              </li>
 
-              <li className="flex items-center justify-between">
-                <div>
-                  <div className="font-medium text-brand-text">
-                    Backend Goose
+            {suggestionsError && (
+              <p className="mb-2 text-xs text-red-400">{suggestionsError}</p>
+            )}
+
+            {suggestionsLoading && !suggestionsError && (
+              <p className="mb-2 text-xs text-brand-muted">
+                Loading suggestions...
+              </p>
+            )}
+
+            <ul className="space-y-3">
+              {suggestedUsers.map((user) => (
+                <li
+                  key={user._id}
+                  className="flex items-center justify-between"
+                >
+                  <div>
+                    <div className="font-medium text-brand-text">
+                      {user.username}
+                    </div>
+                    <div className="text-xs text-brand-muted">
+                      @{user.username}
+                    </div>
                   </div>
-                  <div className="text-xs text-brand-muted">@api_goose</div>
-                </div>
-                {/* functional follow button */}
-                <FollowButton targetUsername="api_goose" />
-              </li>
+
+                  <FollowButton
+                    targetUsername={user.username}
+                    onChanged={(nowFollowing) =>
+                      handleGlobalFollowChange(user.username, nowFollowing)
+                    }
+                  />
+                </li>
+              ))}
+
+              {!suggestionsLoading &&
+                !suggestionsError &&
+                suggestedUsers.length === 0 && (
+                  <li className="text-xs text-brand-muted">
+                    No suggestions right now.
+                  </li>
+                )}
             </ul>
           </div>
 
@@ -200,7 +327,10 @@ export default function Dashboard() {
         </aside>
 
         {/* CENTER (Post Composer + Feed) */}
-        <PostFeed loggedInUsername={state.username} />
+        <PostFeed
+          loggedInUsername={state.username}
+          onFollowChange={handleGlobalFollowChange}
+        />
       </main>
     </>
   );

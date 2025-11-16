@@ -35,9 +35,13 @@ type UsersResponse = {
 
 type PostFeedProps = {
   loggedInUsername?: string;
+  onFollowChange?: (username: string, nowFollowing: boolean) => void;
 };
 
-export default function PostFeed({ loggedInUsername }: PostFeedProps) {
+export default function PostFeed({
+  loggedInUsername,
+  onFollowChange,
+}: PostFeedProps) {
   const [posts, setPosts] = useState<Post[]>([]);
   const [visibleCount, setVisibleCount] = useState(15);
   const [loadingPosts, setLoadingPosts] = useState(false);
@@ -107,7 +111,10 @@ export default function PostFeed({ loggedInUsername }: PostFeedProps) {
     setFollowStatusByUser((prev) => ({
       ...prev,
       [username]: nowFollowing,
+      
     }));
+
+    onFollowChange?.(username, nowFollowing);
   }
 
   return (
