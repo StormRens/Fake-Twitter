@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api_service.dart';
 import 'register_screen.dart';
 import 'home_screen.dart';
@@ -129,35 +130,17 @@ class _LoginScreenState extends State<LoginScreen>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Header with gradient logo dot
+                        // Header with duck logo
                         Column(
                           children: [
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                gradient: const SweepGradient(
-                                  center: Alignment.center,
-                                  colors: [
-                                    Color(0xFF6B9CFF),
-                                    Color(0xFF9A6BFF),
-                                    Color(0xFF3DD3B0),
-                                    Color(0xFF6B9CFF),
-                                  ],
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    blurRadius: 24,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
-                              ),
+                            SvgPicture.asset(
+                              'assets/DuckIcon.svg',
+                              width: 60,
+                              height: 60,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             const Text(
-                              'Welcome back',
+                              'Welcome to Ducky',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.w700,

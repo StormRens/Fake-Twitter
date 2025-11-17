@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
 
@@ -159,33 +160,15 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   List<Widget> _buildFormFields() {
     return [
-      // Header with gradient logo
+      // Header with duck logo
       Column(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: const SweepGradient(
-                center: Alignment.center,
-                colors: [
-                  Color(0xFF6B9CFF),
-                  Color(0xFF9A6BFF),
-                  Color(0xFF3DD3B0),
-                  Color(0xFF6B9CFF),
-                ],
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
+          SvgPicture.asset(
+            'assets/DuckIcon.svg',
+            width: 60,
+            height: 60,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           const Text(
             'Create your account',
             style: TextStyle(
@@ -197,7 +180,7 @@ class _RegisterScreenState extends State<RegisterScreen>
           ),
           const SizedBox(height: 4),
           const Text(
-            'Sign up to join Fake Twitter',
+            'Sign up to join Ducky',
             style: TextStyle(
               fontSize: 15,
               color: Color(0xFFA8B0BD),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'login_screen.dart';
@@ -49,7 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loadingPosts = false;
   String? _loadError;
   List<Post> _posts = [];
-  String? _userId;
 
   String get _displayUsername => widget.profileUsername ?? widget.username;
   bool get _isOwnProfile => widget.profileUsername == null ||
@@ -59,12 +59,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadProfileData();
-    _loadUserPosts();
   }
 
   Future<void> _loadProfileData() async {
     setState(() {
       _loadingProfile = true;
+      _loadingPosts = true;
       _loadError = null;
     });
 
@@ -79,12 +79,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+
+        // Backend returns: { username, followersCount, followingCount, posts, isFollowing }
+        final rawPosts = (data['posts'] as List?) ?? [];
+
+        final posts = rawPosts.map((p) {
+          return Post(
+            id: p['_id'] ?? '',
+            userId: p['userId'] ?? '',
+            title: p['title'] ?? '',
+            description: p['description'] ?? '',
+            date: p['date'] ?? DateTime.now().toIso8601String(),
+          );
+        }).toList();
+
         setState(() {
-          _userId = data['user']['_id'];
-          _followersCount = (data['user']['followers'] as List?)?.length ?? 0;
-          _followingCount = (data['user']['following'] as List?)?.length ?? 0;
+          _followersCount = data['followersCount'] ?? 0;
+          _followingCount = data['followingCount'] ?? 0;
           _isFollowing = data['isFollowing'] ?? false;
+          _posts = posts;
+          _postsCount = posts.length;
           _loadingProfile = false;
+          _loadingPosts = false;
         });
       } else {
         throw Exception('Failed to load profile');
@@ -93,67 +109,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       setState(() {
         _loadError = 'Failed to load profile: ${e.toString()}';
         _loadingProfile = false;
-      });
-    }
-  }
-
-  Future<void> _loadUserPosts() async {
-    setState(() {
-      _loadingPosts = true;
-    });
-
-    try {
-      // Get user ID first if we don't have it
-      if (_userId == null) {
-        final userResponse = await http.get(
-          Uri.parse('$API_BASE_URL/user/$_displayUsername/profile'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${widget.token}',
-          },
-        );
-
-        if (userResponse.statusCode == 200) {
-          final userData = jsonDecode(userResponse.body);
-          _userId = userData['user']['_id'];
-        }
-      }
-
-      if (_userId != null) {
-        final response = await http.get(
-          Uri.parse('$API_BASE_URL/post/$_userId'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${widget.token}',
-          },
-        );
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          final rawPosts = (data['posts'] as List?) ?? [];
-
-          final posts = rawPosts.map((p) {
-            return Post(
-              id: p['_id'],
-              userId: p['userId'],
-              title: p['title'],
-              description: p['description'] ?? '',
-              date: p['date'],
-            );
-          }).toList();
-
-          setState(() {
-            _posts = posts;
-            _postsCount = posts.length;
-            _loadingPosts = false;
-          });
-        } else {
-          throw Exception('Failed to load posts');
-        }
-      }
-    } catch (e) {
-      setState(() {
-        _loadError = 'Failed to load posts: ${e.toString()}';
         _loadingPosts = false;
       });
     }
@@ -292,21 +247,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Row(
             children: [
               // Logo and App Name
-              Container(
+              SvgPicture.asset(
+                'assets/DuckIcon.svg',
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const SweepGradient(
-                    center: Alignment.center,
-                    colors: [
-                      Color(0xFF6B9CFF),
-                      Color(0xFF9A6BFF),
-                      Color(0xFF3DD3B0),
-                      Color(0xFF6B9CFF),
-                    ],
-                  ),
-                ),
               ),
               const SizedBox(width: 12),
               const Column(
@@ -314,7 +258,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'FakeTwitwer',
+                    'Ducky',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'login_screen.dart';
@@ -230,21 +231,10 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Container(
+              SvgPicture.asset(
+                'assets/DuckIcon.svg',
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const SweepGradient(
-                    center: Alignment.center,
-                    colors: [
-                      Color(0xFF6B9CFF),
-                      Color(0xFF9A6BFF),
-                      Color(0xFF3DD3B0),
-                      Color(0xFF6B9CFF),
-                    ],
-                  ),
-                ),
               ),
               const SizedBox(width: 12),
               const Column(
@@ -252,7 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'FakeTwitwer',
+                    'Ducky',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,

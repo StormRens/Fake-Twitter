@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'login_screen.dart';
@@ -59,24 +60,30 @@ class _FollowingScreenState extends State<FollowingScreen> {
     });
 
     try {
-      // Get current user's ID first
-      final userResponse = await http.get(
-        Uri.parse('$API_BASE_URL/user/${widget.username}/profile'),
+      // Get current user's ID from /user/all endpoint
+      final usersResponse = await http.get(
+        Uri.parse('$API_BASE_URL/user/all'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
         },
       );
 
-      if (userResponse.statusCode == 200) {
-        final userData = jsonDecode(userResponse.body);
+      if (usersResponse.statusCode == 200) {
+        final usersData = jsonDecode(usersResponse.body);
+        final rawUsers = (usersData['users'] as List?) ?? [];
 
-        // Add null check for user data
-        if (userData == null || userData['user'] == null) {
-          throw Exception('Invalid user data received');
+        // Find current user by username to get their ID
+        final currentUser = rawUsers.firstWhere(
+          (user) => user['username'] == widget.username,
+          orElse: () => null,
+        );
+
+        if (currentUser == null || currentUser['_id'] == null) {
+          throw Exception('Could not find current user');
         }
 
-        _userId = userData['user']['_id'];
+        _userId = currentUser['_id'];
 
         // Fetch following posts
         final response = await http.get(
@@ -143,7 +150,7 @@ class _FollowingScreenState extends State<FollowingScreen> {
           throw Exception('Failed to load following feed: ${response.statusCode}');
         }
       } else {
-        throw Exception('Failed to load user profile: ${userResponse.statusCode}');
+        throw Exception('Failed to load users: ${usersResponse.statusCode}');
       }
     } catch (e) {
       setState(() {
@@ -261,21 +268,10 @@ class _FollowingScreenState extends State<FollowingScreen> {
           child: Row(
             children: [
               // Logo and App Name
-              Container(
+              SvgPicture.asset(
+                'assets/DuckIcon.svg',
                 width: 40,
                 height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: const SweepGradient(
-                    center: Alignment.center,
-                    colors: [
-                      Color(0xFF6B9CFF),
-                      Color(0xFF9A6BFF),
-                      Color(0xFF3DD3B0),
-                      Color(0xFF6B9CFF),
-                    ],
-                  ),
-                ),
               ),
               const SizedBox(width: 12),
               const Column(
@@ -283,7 +279,7 @@ class _FollowingScreenState extends State<FollowingScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'FakeTwitwer',
+                    'Ducky',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
