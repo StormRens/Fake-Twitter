@@ -33,16 +33,78 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _creatingPost = false;
   String? _createError;
 
+  // Search state
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  List<Map<String, dynamic>> _allUsers = [];
+  List<Map<String, dynamic>> _filteredUsers = [];
+  bool _loadingUsers = false;
+
   @override
   void initState() {
     super.initState();
     _loadAllPosts();
+    _loadAllUsers();
   }
 
   @override
   void dispose() {
     _postController.dispose();
+    _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAllUsers() async {
+    setState(() {
+      _loadingUsers = true;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('$API_BASE_URL/user/all'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final users = (data['users'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+        setState(() {
+          _allUsers = users;
+          _loadingUsers = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _loadingUsers = false;
+      });
+    }
+  }
+
+  void _searchUsers(String query) {
+    setState(() {
+      _searchQuery = query;
+      if (query.isEmpty) {
+        _filteredUsers = [];
+      } else {
+        final lowerQuery = query.toLowerCase();
+        _filteredUsers = _allUsers.where((user) {
+          final username = (user['username'] as String?)?.toLowerCase() ?? '';
+          return username.contains(lowerQuery);
+        }).toList();
+      }
+    });
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchQuery = '';
+      _filteredUsers = [];
+      _searchController.clear();
+    });
   }
 
   Future<void> _loadAllPosts() async {
@@ -186,6 +248,187 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildSearchBar() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Search input field
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+              width: 1,
+            ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withOpacity(0.08),
+                Colors.white.withOpacity(0.04),
+              ],
+            ),
+          ),
+          child: TextField(
+            controller: _searchController,
+            style: const TextStyle(
+              color: Color(0xFFE7ECF3),
+              fontSize: 14,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Search users by username...',
+              hintStyle: TextStyle(
+                color: Colors.white.withOpacity(0.3),
+                fontSize: 14,
+              ),
+              prefixIcon: const Icon(
+                Icons.search,
+                color: Color(0xFF6B9CFF),
+                size: 20,
+              ),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        color: Color(0xFFA8B0BD),
+                        size: 20,
+                      ),
+                      onPressed: _clearSearch,
+                    )
+                  : null,
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
+            ),
+            onChanged: _searchUsers,
+          ),
+        ),
+
+        // User search results dropdown (appears below search bar)
+        if (_searchQuery.isNotEmpty && _filteredUsers.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1F2E),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    'Users (${_filteredUsers.length})',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFA8B0BD),
+                    ),
+                  ),
+                ),
+                ...List.generate(_filteredUsers.length, (index) {
+                  final user = _filteredUsers[index];
+                  final username = user['username'] as String? ?? '';
+                  return InkWell(
+                    onTap: () {
+                      _clearSearch(); // Clear search when navigating
+                      _navigateToProfile(profileUsername: username);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: index > 0
+                              ? BorderSide(
+                                  color: Colors.white.withOpacity(0.05),
+                                )
+                              : BorderSide.none,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6B9CFF).withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                username.isNotEmpty
+                                    ? username[0].toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF6B9CFF),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              '@$username',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFFE7ECF3),
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            Icons.arrow_forward_ios,
+                            size: 14,
+                            color: Colors.white.withOpacity(0.3),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+
+        // No results message
+        if (_searchQuery.isNotEmpty && _filteredUsers.isEmpty && !_loadingUsers)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A1F2E),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.1),
+                width: 1,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                'No users found for "$_searchQuery"',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFFA8B0BD),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,6 +442,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
+                    _buildSearchBar(),
+                    const SizedBox(height: 16),
                     _buildNavigationCard(),
                     const SizedBox(height: 16),
                     _buildPostComposer(),
@@ -593,7 +838,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-          // Posts list
+          // Posts list (always show all posts, unfiltered)
           ...List.generate(_posts.length, (index) {
             final post = _posts[index];
             return Column(
