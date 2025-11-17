@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'login_screen.dart';
+import 'home_screen.dart';
+import 'following_screen.dart';
+
+const API_BASE_URL = 'http://192.168.1.230:5001';
 
 class ProfileScreen extends StatefulWidget {
   final String username;
@@ -17,15 +23,182 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
+class Post {
+  final String id;
+  final String userId;
+  final String title;
+  final String description;
+  final String date;
+
+  Post({
+    required this.id,
+    required this.userId,
+    required this.title,
+    required this.description,
+    required this.date,
+  });
+}
+
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _loggingOut = false;
   int _followersCount = 0;
   int _followingCount = 0;
+  int _postsCount = 0;
   bool _isFollowing = false;
+  bool _loadingProfile = false;
+  bool _loadingPosts = false;
+  String? _loadError;
+  List<Post> _posts = [];
+  String? _userId;
 
   String get _displayUsername => widget.profileUsername ?? widget.username;
   bool get _isOwnProfile => widget.profileUsername == null ||
                             widget.profileUsername == widget.username;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+    _loadUserPosts();
+  }
+
+  Future<void> _loadProfileData() async {
+    setState(() {
+      _loadingProfile = true;
+      _loadError = null;
+    });
+
+    try {
+      final response = await http.get(
+        Uri.parse('$API_BASE_URL/user/$_displayUsername/profile'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _userId = data['user']['_id'];
+          _followersCount = (data['user']['followers'] as List?)?.length ?? 0;
+          _followingCount = (data['user']['following'] as List?)?.length ?? 0;
+          _isFollowing = data['isFollowing'] ?? false;
+          _loadingProfile = false;
+        });
+      } else {
+        throw Exception('Failed to load profile');
+      }
+    } catch (e) {
+      setState(() {
+        _loadError = 'Failed to load profile: ${e.toString()}';
+        _loadingProfile = false;
+      });
+    }
+  }
+
+  Future<void> _loadUserPosts() async {
+    setState(() {
+      _loadingPosts = true;
+    });
+
+    try {
+      // Get user ID first if we don't have it
+      if (_userId == null) {
+        final userResponse = await http.get(
+          Uri.parse('$API_BASE_URL/user/$_displayUsername/profile'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${widget.token}',
+          },
+        );
+
+        if (userResponse.statusCode == 200) {
+          final userData = jsonDecode(userResponse.body);
+          _userId = userData['user']['_id'];
+        }
+      }
+
+      if (_userId != null) {
+        final response = await http.get(
+          Uri.parse('$API_BASE_URL/post/$_userId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${widget.token}',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final rawPosts = (data['posts'] as List?) ?? [];
+
+          final posts = rawPosts.map((p) {
+            return Post(
+              id: p['_id'],
+              userId: p['userId'],
+              title: p['title'],
+              description: p['description'] ?? '',
+              date: p['date'],
+            );
+          }).toList();
+
+          setState(() {
+            _posts = posts;
+            _postsCount = posts.length;
+            _loadingPosts = false;
+          });
+        } else {
+          throw Exception('Failed to load posts');
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _loadError = 'Failed to load posts: ${e.toString()}';
+        _loadingPosts = false;
+      });
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    try {
+      final endpoint = _isFollowing ? 'unfollow' : 'follow';
+      final response = await http.post(
+        Uri.parse('$API_BASE_URL/user/$_displayUsername/$endpoint'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _isFollowing = !_isFollowing;
+          if (_isFollowing) {
+            _followersCount++;
+          } else {
+            _followersCount--;
+          }
+        });
+      }
+    } catch (e) {
+      // Handle error silently or show snackbar
+    }
+  }
+
+  String _formatTimeAgo(String dateStr) {
+    final date = DateTime.parse(dateStr);
+    final now = DateTime.now();
+    final diff = now.difference(date);
+
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    if (diff.inDays == 1) return '1d';
+    if (diff.inDays < 7) return '${diff.inDays}d';
+    if (diff.inDays < 30) return '${(diff.inDays / 7).floor()}w';
+    if (diff.inDays < 365) return '${(diff.inDays / 30).floor()}mo';
+    return '${(diff.inDays / 365).floor()}y';
+  }
 
   Future<void> _handleLogout() async {
     setState(() => _loggingOut = true);
@@ -36,6 +209,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
         (route) => false,
       );
     }
+  }
+
+  void _navigateToHome() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HomeScreen(
+          username: widget.username,
+          token: widget.token,
+        ),
+      ),
+      (route) => false,
+    );
+  }
+
+  void _navigateToFollowing() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FollowingScreen(
+          username: widget.username,
+          token: widget.token,
+        ),
+      ),
+    );
   }
 
   @override
@@ -223,11 +421,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          _buildNavLink('Home'),
+          _buildNavLink('Home', onTap: _navigateToHome),
           const SizedBox(height: 8),
-          _buildNavLink('Explore'),
-          const SizedBox(height: 8),
-          _buildNavLink('Following'),
+          _buildNavLink('Following', onTap: _navigateToFollowing),
           const SizedBox(height: 8),
           _buildNavLink('Profile', isActive: true),
         ],
@@ -235,22 +431,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildNavLink(String label, {bool isActive = false}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-          color: isActive ? const Color(0xFFE7ECF3) : const Color(0xFFA8B0BD),
+  Widget _buildNavLink(String label, {bool isActive = false, VoidCallback? onTap}) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+            color: isActive ? const Color(0xFFE7ECF3) : const Color(0xFFA8B0BD),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildProfileStatsCard() {
+    if (_loadingProfile) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.1),
+            width: 1,
+          ),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white.withOpacity(0.08),
+              Colors.white.withOpacity(0.04),
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.all(40),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF6B9CFF),
+          ),
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -327,7 +552,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _buildStatColumn('Posts', '12'),
+              _buildStatColumn('Posts', _postsCount.toString()),
               Container(
                 width: 1,
                 height: 40,
@@ -363,16 +588,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () {
-                    setState(() {
-                      _isFollowing = !_isFollowing;
-                      if (_isFollowing) {
-                        _followersCount++;
-                      } else {
-                        _followersCount--;
-                      }
-                    });
-                  },
+                  onTap: _toggleFollow,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
@@ -420,6 +636,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildUserPostsCard() {
+    if (_loadingPosts) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.1),
+            width: 1,
+          ),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.white.withOpacity(0.08),
+              Colors.white.withOpacity(0.04),
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.all(40),
+        child: const Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF6B9CFF),
+          ),
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -457,48 +699,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Sample post 1
-          _buildPostPlaceholder(
-            title: 'First post!',
-            description: 'This is my first post on FakeTwitwer',
-            date: '2 hours ago',
-          ),
-
-          const Divider(
-            color: Color(0xFF2A3444),
-            height: 32,
-          ),
-
-          // Sample post 2
-          _buildPostPlaceholder(
-            title: 'Another great day',
-            description: 'Working on some exciting features',
-            date: '1 day ago',
-          ),
-
-          const Divider(
-            color: Color(0xFF2A3444),
-            height: 32,
-          ),
-
-          // Sample post 3
-          _buildPostPlaceholder(
-            title: 'Weekend vibes',
-            description: 'Enjoying the weekend!',
-            date: '3 days ago',
-          ),
-
-          const SizedBox(height: 16),
-
-          const Center(
-            child: Text(
-              'No more posts to show.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFFA8B0BD),
+          if (_posts.isEmpty)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Text(
+                  'No posts yet.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFFA8B0BD),
+                  ),
+                ),
               ),
-            ),
-          ),
+            )
+          else
+            ...List.generate(_posts.length, (index) {
+              final post = _posts[index];
+              return Column(
+                children: [
+                  if (index > 0)
+                    const Divider(
+                      color: Color(0xFF2A3444),
+                      height: 32,
+                    ),
+                  _buildPostPlaceholder(
+                    title: post.title,
+                    description: post.description,
+                    date: _formatTimeAgo(post.date),
+                  ),
+                ],
+              );
+            }),
         ],
       ),
     );
@@ -533,14 +764,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          description,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFFA8B0BD),
+        if (description.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFFA8B0BD),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
