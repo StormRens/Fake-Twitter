@@ -337,6 +337,7 @@ export default function Profile() {
               >
                 Home
               </Link>
+              {/*
               <Link
                 to="/dashboard"
                 state={{ username: loggedInUsername }}
@@ -344,6 +345,7 @@ export default function Profile() {
               >
                 Explore
               </Link>
+              */}
               <Link
                 to="/following"
                 state={{ username: loggedInUsername }}
@@ -354,6 +356,7 @@ export default function Profile() {
               <span className="block w-full text-left font-medium text-brand-text">
                 Profile
               </span>
+              {/*
               <Link
                 to="/settings"
                 state={{ username: loggedInUsername }}
@@ -361,6 +364,7 @@ export default function Profile() {
               >
                 Settings
               </Link>
+              */}
             </nav>
           </div>
 

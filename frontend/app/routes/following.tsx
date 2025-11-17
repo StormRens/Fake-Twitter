@@ -194,6 +194,7 @@ export default function Following() {
               >
                 Home
               </Link>
+              {/*
               <Link
                 to="/dashboard"
                 state={{ username: usernameFromState }}
@@ -201,6 +202,7 @@ export default function Following() {
               >
                 Explore
               </Link>
+              */}
               <span className="block w-full text-left font-semibold text-brand-text">
                 Following
               </span>
@@ -211,6 +213,7 @@ export default function Following() {
               >
                 Profile
               </Link>
+              {/*
               <Link
                 to="/settings"
                 state={{ username: usernameFromState }}
@@ -218,6 +221,7 @@ export default function Following() {
               >
                 Settings
               </Link>
+              */}
             </nav>
           </div>
 

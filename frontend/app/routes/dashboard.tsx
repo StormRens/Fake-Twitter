@@ -236,6 +236,7 @@ export default function Dashboard() {
               </Link>
 
               {/* These can be wired later when pages exist */}
+              {/*
               <Link
                 to="/dashboard"
                 state={{ username: state.username }}
@@ -243,6 +244,7 @@ export default function Dashboard() {
               >
                 Explore
               </Link>
+              */}
 
               <Link
                 to="/following"
@@ -260,6 +262,7 @@ export default function Dashboard() {
                 Profile
               </Link>
 
+              {/*
               <Link
                 to="/settings"
                 state={{ username: state.username }}
@@ -267,6 +270,7 @@ export default function Dashboard() {
               >
                 Settings
               </Link>
+              */}
             </nav>
           </div>
 
