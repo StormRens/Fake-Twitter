@@ -231,7 +231,7 @@ export default function Following() {
               Following feed
             </h2>
             <p className="text-xs">
-              This page shows posts only from accounts you follow.
+              This page shows quacks only from ducks you follow.
             </p>
           </div>
 

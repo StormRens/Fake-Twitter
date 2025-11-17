@@ -387,8 +387,8 @@ export default function Profile() {
             </div>
 
             <p className="text-xs">
-              This is your public profile. Your bio, stats and posts are loaded
-              from the backend.
+              This is your public profile. You can check all the quacks you’ve made, 
+              the ducks you follow, and the ducks that follow you.
             </p>
 
             <dl className="mt-4 grid grid-cols-3 gap-3 text-center text-xs">
@@ -419,8 +419,8 @@ export default function Profile() {
               Profile tips
             </p>
             <p>
-              As you keep posting on the dashboard, this page will show your
-              full timeline and stats pulled from the server.
+              As you keep quacking in the pond, this page will display your full timeline, 
+              fetched directly from the backend by Ducky.
             </p>
           </div>
 

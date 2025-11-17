@@ -282,8 +282,7 @@ export default function Dashboard() {
             <p className="text-sm font-medium text-brand-text">{username}</p>
             <p className="text-xs text-brand-muted">{handle}</p>
             <p className="mt-3 text-xs">
-              This is your public timeline. Once the backend is hooked up, your
-              real posts will appear here.
+              Welcome to the public pond. Here, you can see all the quacks from every duck.
             </p>
           </div>
 
