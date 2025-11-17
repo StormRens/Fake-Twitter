@@ -147,7 +147,7 @@ export default function Following() {
             />
             <div>
               <div className="text-sm font-semibold tracking-wide">
-                FakeTwitwer
+                Ducky
               </div>
               <p className="text-xs text-brand-muted">
                 Where the ducks come to post.
@@ -185,7 +185,7 @@ export default function Following() {
         <aside className="hidden space-y-4 lg:block">
           {/* Navigation */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
-            <h2 className="mb-3 text-sm font-semibold">Navigation</h2>
+            <h2 className="mb-3 text-sm font-semibold text-blue-400">Navigation</h2>
             <nav className="space-y-2 text-sm text-brand-muted">
               <Link
                 to="/dashboard"
@@ -227,7 +227,7 @@ export default function Following() {
 
           {/* Small summary card */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 text-sm text-brand-muted shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
-            <h2 className="mb-2 text-sm font-semibold text-brand-text">
+            <h2 className="mb-2 text-sm font-semibold text-blue-400">
               Following feed
             </h2>
             <p className="text-xs">
@@ -237,7 +237,7 @@ export default function Following() {
 
           {/* Footer */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 text-xs text-brand-muted shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
-            FakeTwitwer · {new Date().getFullYear()}
+            Ducky · {new Date().getFullYear()}
             <br />
             Built with React, TypeScript &amp; Tailwind.
           </div>

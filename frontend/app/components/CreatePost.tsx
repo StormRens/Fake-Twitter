@@ -71,7 +71,7 @@ export default function CreatePost({ onPostCreated }: CreatePostProps) {
         onChange={(e) => setDraft(e.target.value)}
         rows={3}
         maxLength={maxChars}
-        placeholder="Share your thoughts with the pond..."
+        placeholder="Share your quacks with the pond..."
         className="
           w-full resize-none rounded-2xl border border-brand-stroke/70
           bg-[rgba(8,12,26,0.7)] px-3 py-2 text-sm text-brand-text

@@ -79,7 +79,7 @@ export default function UserSearchBar({ currentUsername }: UserSearchBarProps) {
         <div className="hidden relative flex-1 max-w-md items-center rounded-2xl border border-brand-stroke bg-slate-900 px-3 py-2 text-sm text-brand-muted sm:flex">
             <input
                 type="search"
-                placeholder="Search users on FakeTwitwer"
+                placeholder="Search ducks on the pond"
                 className="w-full bg-transparent text-xs text-brand-text placeholder:text-brand-muted focus:outline-none"
                 value={searchInput}
                 onChange={handleSearchChange}

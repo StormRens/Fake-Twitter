@@ -183,7 +183,7 @@ export default function Dashboard() {
             />
             <div>
               <div className="text-sm font-semibold tracking-wide">
-                FakeTwitwer
+                Ducky
               </div>
               <p className="text-xs text-brand-muted">
                 Where the ducks come to post.
@@ -224,7 +224,7 @@ export default function Dashboard() {
         <aside className="hidden space-y-4 lg:block">
           {/* Navigation */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
-            <h2 className="mb-3 text-sm font-semibold">Navigation</h2>
+            <h2 className="mb-3 text-sm font-semibold text-blue-400">Navigation</h2>
 
             <nav className="space-y-2 text-sm text-brand-muted">
               <Link
@@ -276,7 +276,7 @@ export default function Dashboard() {
 
           {/* Profile summary */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 text-sm text-brand-muted shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
-            <h2 className="mb-2 text-sm font-semibold text-brand-text">
+            <h2 className="mb-2 text-sm font-semibold text-blue-400">
               Your profile
             </h2>
             <p className="text-sm font-medium text-brand-text">{username}</p>
@@ -289,7 +289,7 @@ export default function Dashboard() {
 
           {/* Who to follow */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 text-sm shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
-            <h2 className="mb-3 text-sm font-semibold text-brand-text">
+            <h2 className="mb-3 text-sm font-semibold text-blue-400 text-center">
               Who to follow
             </h2>
 
@@ -344,7 +344,7 @@ export default function Dashboard() {
 
           {/* Footer */}
           <div className="rounded-3xl border border-brand-stroke bg-brand-card-soft px-5 py-4 text-xs text-brand-muted shadow-[0_18px_35px_rgba(0,0,0,0.6)]">
-            FakeTwitwer · {new Date().getFullYear()}
+            Ducky · {new Date().getFullYear()}
             <br />
             Built with React, TypeScript &amp; Tailwind.
           </div>

@@ -222,7 +222,7 @@ export default function PostCard({
             onClick={openProfile}
             className="min-w-0 text-left cursor-pointer"
           >
-            <span className="block truncate text-sm font-semibold text-brand-text hover:underline">
+            <span className="block truncate text-sm font-semibold text-blue-300 hover:underline">
               {username}
             </span>
             <span className="block truncate text-xs text-brand-muted hover:underline">
