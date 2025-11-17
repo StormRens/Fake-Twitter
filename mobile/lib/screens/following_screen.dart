@@ -70,6 +70,12 @@ class _FollowingScreenState extends State<FollowingScreen> {
 
       if (userResponse.statusCode == 200) {
         final userData = jsonDecode(userResponse.body);
+
+        // Add null check for user data
+        if (userData == null || userData['user'] == null) {
+          throw Exception('Invalid user data received');
+        }
+
         _userId = userData['user']['_id'];
 
         // Fetch following posts
@@ -83,6 +89,12 @@ class _FollowingScreenState extends State<FollowingScreen> {
 
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
+
+          // Add null check for posts data
+          if (data == null) {
+            throw Exception('Invalid posts data received');
+          }
+
           final rawPosts = (data['posts'] as List?) ?? [];
 
           // Fetch all users to map userId to username
@@ -95,22 +107,30 @@ class _FollowingScreenState extends State<FollowingScreen> {
           );
 
           final usersData = jsonDecode(usersResponse.body);
+
+          // Add null check for users data
+          if (usersData == null) {
+            throw Exception('Invalid users data received');
+          }
+
           final rawUsers = (usersData['users'] as List?) ?? [];
 
           // Create user map
           final userMap = <String, String>{};
           for (final user in rawUsers) {
-            userMap[user['_id']] = user['username'];
+            if (user != null && user['_id'] != null && user['username'] != null) {
+              userMap[user['_id']] = user['username'];
+            }
           }
 
           // Map posts with usernames
-          final posts = rawPosts.map((p) {
+          final posts = rawPosts.where((p) => p != null).map((p) {
             return Post(
-              id: p['_id'],
-              userId: p['userId'],
-              title: p['title'],
+              id: p['_id'] ?? '',
+              userId: p['userId'] ?? '',
+              title: p['title'] ?? '',
               description: p['description'] ?? '',
-              date: p['date'],
+              date: p['date'] ?? DateTime.now().toIso8601String(),
               authorUsername: userMap[p['userId']] ?? 'Unknown',
             );
           }).toList();
@@ -120,8 +140,10 @@ class _FollowingScreenState extends State<FollowingScreen> {
             _loadingPosts = false;
           });
         } else {
-          throw Exception('Failed to load following feed');
+          throw Exception('Failed to load following feed: ${response.statusCode}');
         }
+      } else {
+        throw Exception('Failed to load user profile: ${userResponse.statusCode}');
       }
     } catch (e) {
       setState(() {
